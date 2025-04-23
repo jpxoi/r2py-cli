@@ -6,9 +6,7 @@
 ![GitHub pull requests](https://img.shields.io/github/issues-pr/jpxoi/r2py-cli)
 ![GitHub contributors](https://img.shields.io/github/contributors/jpxoi/r2py-cli)
 
-This is a command-line tool to upload, download, or delete files to Cloudflare R2 using its S3-compatible API. It is built using Python and the `boto3` library, which provides a simple interface for interacting with S3-compatible storage services.
-
-The CLI is designed to be user-friendly and provides progress bars for uploads and downloads, as well as logging for all operations.
+This is a command-line tool to interact with Cloudflare R2 storage. It allows you to upload, download, delete, and list objects in your R2 buckets. The tool is designed to be simple and efficient, making it easy to manage your files in R2. This is a command-line tool to interact with Cloudflare R2 using its S3-compatible API. It is built using Python and the `boto3` library, which provides a simple interface for interacting with S3-compatible storage services.
 
 > [!NOTE]
 > This project is not an official Cloudflare product and is not maintained by Cloudflare. It is an open-source project created by the community for the community.
@@ -116,6 +114,43 @@ python main.py [OPTIONS] COMMAND [ARGS]
   - `BUCKET_NAME`: The name of the R2 bucket.
   - `OBJECT_KEY`: The key of the object you want to delete from the bucket.
   - `--region`: Specify the region for the bucket. This is optional and defaults to `auto`.
+
+- **list**: List buckets, objects, or multipart uploads
+
+    ```bash
+    python main.py list [OPTIONS] [BUCKET_NAME]
+    ```
+
+  - `BUCKET_NAME`: The name of the R2 bucket (omit for --buckets).
+  - `--buckets`: List all buckets (omit BUCKET_NAME).
+  - `--with-region`: Show region info when listing buckets.
+  - `--multipart`: List multipart uploads in the bucket (requires BUCKET_NAME).
+  - `--prefix`: Filter objects by prefix (requires BUCKET_NAME).
+  - `--region`: Specify the region for the bucket. This is optional and defaults to `auto`.
+
+  **Examples:**
+  - List all buckets: `python main.py list --buckets`
+  - List all buckets with region: `python main.py list --buckets --with-region`
+  - List objects in a bucket: `python main.py list my-bucket`
+  - List objects with prefix: `python main.py list my-bucket --prefix images/`
+  - List multipart uploads: `python main.py list my-bucket --multipart`
+
+- **abort**: Abort a multipart upload
+
+    ```bash
+    python main.py abort [OPTIONS] BUCKET_NAME OBJECT_KEY UPLOAD_ID
+    ```
+
+  - `BUCKET_NAME`: The name of the R2 bucket.
+  - `OBJECT_KEY`: The key of the object being uploaded.
+  - `UPLOAD_ID`: The multipart upload ID to abort.
+  - `--region`: Specify the region for the bucket. This is optional and defaults to `auto`.
+
+## Improved CLI UI
+
+- All output is colorized for better readability (bucket names, object keys, errors, etc.).
+- Listings are formatted in tables with headers.
+- Clear error messages and progress feedback for all operations.
 
 ## Testing
 
