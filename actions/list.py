@@ -1,8 +1,7 @@
 import sys
 import os
-from typing import Optional
-from utils.progress import TqdmProgress
 from utils.s3base import S3Base
+from utils.colors import Colors
 
 class S3Lister(S3Base):
     """Handles listing buckets, files, etc. from a Cloudflare R2 bucket using the S3-compatible API."""
@@ -25,26 +24,27 @@ class S3Lister(S3Base):
         try:
             response = self.s3.list_buckets()
             buckets = response.get('Buckets', [])
+            print(f"{Colors.HEADER}{Colors.BOLD}=== Buckets ==={Colors.ENDC}")
             if not buckets:
+                print(f"{Colors.WARNING}No buckets found.{Colors.ENDC}")
                 self.logger.warning("No buckets found.")
             else:
                 for bucket in buckets:
-                    self.logger.info(f"Bucket: {bucket['Name']} with creation date {bucket['CreationDate']}")
-                    print(f"Bucket: {bucket['Name']}")
+                    print(f"{Colors.OKGREEN}Bucket:{Colors.ENDC} {Colors.BOLD}{bucket['Name']}{Colors.ENDC}")
                     if with_regions:
-                        self.logger.info(f"Fetching region for bucket '{bucket['Name']}'...")
-                        region = self.s3.get_bucket_location(Bucket=bucket['Name'])['LocationConstraint']
-                        self.logger.info(f"Region: {region}")
-                        print(f"Region: {region}")
-                    print(f"Creation Date: {bucket['CreationDate']}\n")
-                    
+                        print(f"  {Colors.OKBLUE}Region:{Colors.ENDC} ", end='')
+                        try:
+                            region = self.s3.get_bucket_location(Bucket=bucket['Name'])['LocationConstraint']
+                        except Exception as e:
+                            region = f"{Colors.FAIL}Error: {e}{Colors.ENDC}"
+                        print(f"{region}")
+                    print(f"  {Colors.OKCYAN}Created:{Colors.ENDC} {bucket['CreationDate']}\n")
+
         except Exception as e:
             self.logger.error(f"Error listing buckets: {e}")
             sys.exit(1)
         finally:
             self.logger.info("Finished listing buckets.")
-            print("Finished listing buckets.")
-            sys.exit(0)
 
     def list_objects(self, bucket_name: str) -> None:
         """
@@ -54,19 +54,19 @@ class S3Lister(S3Base):
         """
         try:
             response = self.s3.list_objects_v2(Bucket=bucket_name)
+            print(f"{Colors.HEADER}{Colors.BOLD}=== Objects in Bucket: {bucket_name} ==={Colors.ENDC}")
             if 'Contents' in response:
+                print(f"{Colors.UNDERLINE}%-60s %12s{Colors.ENDC}" % ("Object Key", "Size (bytes)"))
                 for obj in response['Contents']:
-                    print(f"Object: {obj['Key']}, Size: {obj['Size']} bytes")
+                    print("%-60s %12d" % (f"{Colors.OKGREEN}{obj['Key']}{Colors.ENDC}", obj['Size']))
             else:
-                print("No objects found.")
+                print(f"{Colors.WARNING}No objects found.{Colors.ENDC}")
         except Exception as e:
             self.logger.error(f"Error listing objects: {e}")
             sys.exit(1)
         finally:
             self.logger.info(f"Finished listing objects in bucket '{bucket_name}'.")
-            print(f"Finished listing objects in bucket '{bucket_name}'.")
-            sys.exit(0)
-    
+
     def list_multipart_uploads(self, bucket_name: str) -> None:
         """
         List all multipart uploads in the specified bucket.
@@ -75,18 +75,18 @@ class S3Lister(S3Base):
         """
         try:
             response = self.s3.list_multipart_uploads(Bucket=bucket_name)
+            print(f"{Colors.HEADER}{Colors.BOLD}=== Multipart Uploads in Bucket: {bucket_name} ==={Colors.ENDC}")
             if 'Uploads' in response:
+                print(f"{Colors.UNDERLINE}%-40s %-40s{Colors.ENDC}" % ("Upload ID", "Object Key"))
                 for upload in response['Uploads']:
-                    print(f"Upload ID: {upload['UploadId']}, Key: {upload['Key']}")
+                    print("%-40s %-40s" % (f"{Colors.OKBLUE}{upload['UploadId']}{Colors.ENDC}", f"{Colors.OKGREEN}{upload['Key']}{Colors.ENDC}"))
             else:
-                print("No multipart uploads found.")
+                print(f"{Colors.WARNING}No multipart uploads found.{Colors.ENDC}")
         except Exception as e:
             self.logger.error(f"Error listing multipart uploads: {e}")
             sys.exit(1)
         finally:
             self.logger.info(f"Finished listing multipart uploads in bucket '{bucket_name}'.")
-            print(f"Finished listing multipart uploads in bucket '{bucket_name}'.")
-            sys.exit(0)
 
     def list_objects_with_prefix(self, bucket_name: str, prefix: str) -> None:
         """
@@ -97,15 +97,15 @@ class S3Lister(S3Base):
         """
         try:
             response = self.s3.list_objects_v2(Bucket=bucket_name, Prefix=prefix)
+            print(f"{Colors.HEADER}{Colors.BOLD}=== Objects in Bucket: {bucket_name} (Prefix: '{prefix}') ==={Colors.ENDC}")
             if 'Contents' in response:
+                print(f"{Colors.UNDERLINE}%-60s %12s{Colors.ENDC}" % ("Object Key", "Size (bytes)"))
                 for obj in response['Contents']:
-                    print(f"Object: {obj['Key']}, Size: {obj['Size']} bytes")
+                    print("%-60s %12d" % (f"{Colors.OKGREEN}{obj['Key']}{Colors.ENDC}", obj['Size']))
             else:
-                print("No objects found with the specified prefix.")
+                print(f"{Colors.WARNING}No objects found with the specified prefix.{Colors.ENDC}")
         except Exception as e:
             self.logger.error(f"Error listing objects with prefix: {e}")
             sys.exit(1)
         finally:
             self.logger.info(f"Finished listing objects with prefix '{prefix}' in bucket '{bucket_name}'.")
-            print(f"Finished listing objects with prefix '{prefix}' in bucket '{bucket_name}'.")
-            sys.exit(0)
