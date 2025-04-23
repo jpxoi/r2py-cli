@@ -3,7 +3,6 @@ import os
 import mimetypes
 import argparse
 from typing import Optional
-from dotenv import load_dotenv
 import boto3
 from tqdm import tqdm
 from utils.logger import Logger
