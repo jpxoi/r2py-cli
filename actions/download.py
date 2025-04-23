@@ -37,19 +37,3 @@ class S3Downloader(S3Base):
             sys.exit(1)
         finally:
             progress_callback.close()
-
-    @staticmethod
-    def parse_args():
-        logger.info("Parsing command line arguments.")
-        parser = argparse.ArgumentParser(description="Download a file from S3-compatible storage with progress bar.")
-        parser.add_argument("bucket_name", help="Source bucket name")
-        parser.add_argument("object_key", help="Object key in the bucket")
-        parser.add_argument("filename", nargs="?", help="Destination local filename (defaults to object key)")
-        parser.add_argument(
-            "--region",
-            default="auto",
-            choices=["wnam", "enam", "weur", "eeur", "apac", "auto"],
-            help="AWS region name (choices: wnam, enam, weur, eeur, apac, auto; default: auto)"
-        )
-        logger.debug("Command line arguments parsed successfully.")
-        return parser.parse_args()
