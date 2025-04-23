@@ -2,9 +2,7 @@ import sys
 import os
 import mimetypes
 from typing import Optional
-from utils.progress import TqdmProgress
-from utils.s3base import S3Base
-from utils.region import Region
+from utils import TqdmProgress, S3Base, Region
 
 class S3Uploader(S3Base):
     """Handles uploading files to a Cloudflare R2 bucket using the S3-compatible API."""

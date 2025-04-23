@@ -1,7 +1,5 @@
 import sys
-from utils.s3base import S3Base
-from utils.colors import Colors
-from utils.region import Region
+from utils import S3Base, Colors, Region
 
 class S3Creator(S3Base):
     """Handles creating buckets and managing S3 resources."""

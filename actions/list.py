@@ -1,7 +1,5 @@
 import sys
-from utils.s3base import S3Base
-from utils.colors import Colors
-from utils.region import Region
+from utils import S3Base, Colors, Region
 
 class S3Lister(S3Base):
     """Handles listing buckets, files, etc. from a Cloudflare R2 bucket using the S3-compatible API."""

@@ -2,6 +2,7 @@ import logging
 import os
 from datetime import datetime
 from typing import Optional
+from .colors import Colors
 
 class Logger:
     """Singleton logger with file and colored stream handlers for CLI tools."""
@@ -45,16 +46,15 @@ class Logger:
 
         # Colored formatter for stream handler
         class ColoredFormatter(logging.Formatter):
-            COLORS = {
-                'WARNING': '\033[33m',  # yellow
-                'ERROR': '\033[31m',    # red
-                'CRITICAL': '\033[1;31m', # bold red
-                'RESET': '\033[0m',
+            LEVEL_COLORS = {
+                'WARNING': Colors.WARNING,
+                'ERROR': Colors.ERROR,
+                'CRITICAL': Colors.CRITICAL,
             }
             def format(self, record):
                 msg = super().format(record)
-                color = self.COLORS.get(record.levelname, '')
-                reset = self.COLORS['RESET'] if color else ''
+                color = self.LEVEL_COLORS.get(record.levelname, '')
+                reset = Colors.RESET if color else ''
                 return f"{color}{msg}{reset}"
 
         stream_handler = logging.StreamHandler()

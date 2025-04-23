@@ -1,6 +1,6 @@
 import os
 from tqdm import tqdm
-from utils.logger import Logger
+from .logger import Logger
 
 class TqdmProgress:
     """Progress bar callback for S3 downloads or uploads."""
