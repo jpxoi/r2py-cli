@@ -1,4 +1,10 @@
-# R2 S3 Client CLI
+# R2Py CLI Tool
+
+![GitHub](https://img.shields.io/github/license/jpxoi/r2py-cli)
+![GitHub last commit](https://img.shields.io/github/last-commit/jpxoi/r2py-cli)
+![GitHub issues](https://img.shields.io/github/issues/jpxoi/r2py-cli)
+![GitHub pull requests](https://img.shields.io/github/issues-pr/jpxoi/r2py-cli)
+![GitHub contributors](https://img.shields.io/github/contributors/jpxoi/r2py-cli)
 
 This is a command-line tool to upload, download, or delete files to Cloudflare R2 using its S3-compatible API. It is built using Python and the `boto3` library, which provides a simple interface for interacting with S3-compatible storage services.
 

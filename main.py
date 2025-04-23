@@ -5,7 +5,7 @@ from actions.download import S3Downloader
 from actions.delete import S3Deleter
 from utils.s3base import S3Base
 
-app = typer.Typer(name="R2", help="R2 S3 CLI Tool")
+app = typer.Typer(help="R2Py CLI Tool")
 
 @app.callback()
 def main_callback():
