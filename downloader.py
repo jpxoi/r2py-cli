@@ -113,28 +113,3 @@ class S3Downloader:
         )
         logger.debug("Command line arguments parsed successfully.")
         return parser.parse_args()
-
-def main():
-    load_dotenv()
-    logger.info("Loading environment variables from .env file.")
-
-    ENDPOINT_URL = S3Downloader.get_env_var('ENDPOINT_URL', required=True)
-    AWS_ACCESS_KEY_ID = S3Downloader.get_env_var('AWS_ACCESS_KEY_ID', required=True)
-    AWS_SECRET_ACCESS_KEY = S3Downloader.get_env_var('AWS_SECRET_ACCESS_KEY', required=True)
-
-    args = S3Downloader.parse_args()
-    downloader = S3Downloader(
-        endpoint_url=ENDPOINT_URL,
-        access_key=AWS_ACCESS_KEY_ID,
-        secret_key=AWS_SECRET_ACCESS_KEY,
-        region=args.region
-    )
-
-    try:
-        downloader.download_file(args.bucket_name, args.object_key, args.filename)
-    except KeyboardInterrupt:
-        logger.warning("Download cancelled by user.")
-        sys.exit(1)
-
-if __name__ == "__main__":
-    main()
