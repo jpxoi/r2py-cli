@@ -7,6 +7,7 @@ from typing import Optional
 from dotenv import load_dotenv
 import boto3
 from tqdm import tqdm
+from logger import setup_logging
 
 class TqdmProgress:
     """Progress bar callback for S3 uploads."""
@@ -41,10 +42,7 @@ class S3Uploader:
 
     @staticmethod
     def setup_logging() -> None:
-        logging.basicConfig(
-            level=logging.INFO,
-            format="%(asctime)s [%(levelname)s] %(message)s"
-        )
+        setup_logging()
 
     @staticmethod
     def get_env_var(name: str, default: Optional[str]=None, required: bool=False) -> str:
