@@ -4,9 +4,16 @@ from datetime import datetime
 from typing import Optional
 
 class Logger:
+    """Singleton logger with file and colored stream handlers for CLI tools."""
     _instances = {}
 
     def __new__(cls, action: str = 'action', log_dir: Optional[str] = None):
+        """
+        Create or return a logger instance for the given action and log directory.
+        Args:
+            action (str): Action name for log file naming.
+            log_dir (Optional[str]): Directory to store log files.
+        """
         key = (action, log_dir)
         if key not in cls._instances:
             instance = super().__new__(cls)
@@ -15,6 +22,12 @@ class Logger:
         return cls._instances[key]
 
     def _setup(self, action: str, log_dir: Optional[str]):
+        """
+        Set up file and stream handlers for the logger.
+        Args:
+            action (str): Action name for log file naming.
+            log_dir (Optional[str]): Directory to store log files.
+        """
         if log_dir is None:
             log_dir = os.path.join(os.getcwd(), "logs")
 
@@ -55,4 +68,7 @@ class Logger:
         self.logger.propagate = False
 
     def get_logger(self):
+        """
+        Return the underlying logging.Logger instance.
+        """
         return self.logger

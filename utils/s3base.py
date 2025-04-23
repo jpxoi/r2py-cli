@@ -6,7 +6,16 @@ from utils.logger import Logger
 logger = Logger('s3Client').get_logger()
 
 class S3Base:
+    """Base class for S3-compatible operations with Cloudflare R2."""
     def __init__(self, endpoint_url, access_key, secret_key, region):
+        """
+        Initialize the S3 client with credentials and endpoint.
+        Args:
+            endpoint_url (str): S3-compatible endpoint URL.
+            access_key (str): Access key ID.
+            secret_key (str): Secret access key.
+            region (str): AWS region or 'auto'.
+        """
         self.logger = logger
         if region == 'auto':
             self.logger.warning("Region set to 'auto'. Routing requests automatically.")
@@ -24,6 +33,15 @@ class S3Base:
 
     @staticmethod
     def get_env_var(name: str, default=None, required=False):
+        """
+        Get an environment variable, optionally requiring it.
+        Args:
+            name (str): Environment variable name.
+            default: Default value if not set.
+            required (bool): If True, exit if not set.
+        Returns:
+            str: The environment variable value.
+        """
         value = os.getenv(name, default)
         if required and not value:
             logger.error(f"Missing required environment variable: {name}")
@@ -33,4 +51,7 @@ class S3Base:
 
     @staticmethod
     def get_logger():
+        """
+        Return the shared logger instance for S3 operations.
+        """
         return logger

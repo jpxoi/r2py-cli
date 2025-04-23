@@ -6,11 +6,27 @@ from utils.progress import TqdmProgress
 from utils.s3base import S3Base
 
 class S3Downloader(S3Base):
+    """Handles downloading files from a Cloudflare R2 bucket using the S3-compatible API."""
     def __init__(self, endpoint_url: str, access_key: str, secret_key: str, region: str = "auto"):
+        """
+        Initialize the downloader with S3 credentials and endpoint.
+        Args:
+            endpoint_url (str): S3-compatible endpoint URL.
+            access_key (str): Access key ID.
+            secret_key (str): Secret access key.
+            region (str): AWS region or 'auto'.
+        """
         super().__init__(endpoint_url, access_key, secret_key, region)
         self.logger = S3Base.get_logger()
 
     def download_file(self, bucket_name: str, object_key: str, filename: Optional[str] = None) -> None:
+        """
+        Download a file from the specified bucket.
+        Args:
+            bucket_name (str): Source bucket name.
+            object_key (str): S3 object key to download.
+            filename (Optional[str]): Local file path to save (defaults to object_key basename).
+        """
         if not object_key:
             self.logger.warning("Object key not provided.")
             sys.exit(1)

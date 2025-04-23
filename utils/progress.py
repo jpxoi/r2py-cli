@@ -5,6 +5,14 @@ from utils.logger import Logger
 class TqdmProgress:
     """Progress bar callback for S3 downloads or uploads."""
     def __init__(self, filename: str, action: str, total_size: int = None, logger: Logger = None):
+        """
+        Initialize the progress bar for upload or download.
+        Args:
+            filename (str): File being transferred.
+            action (str): 'upload' or 'download'.
+            total_size (int, optional): Total size in bytes (required for download).
+            logger (Logger, optional): Logger for progress messages.
+        """
         self._filename = filename
         self._action = action
         self.logger = logger
@@ -36,10 +44,18 @@ class TqdmProgress:
             self.logger.info(f"File size: {self._size / (1024 * 1024):.2f} MB")
 
     def __call__(self, bytes_amount: int) -> None:
+        """
+        Update the progress bar with the number of bytes transferred.
+        Args:
+            bytes_amount (int): Number of bytes transferred since last update.
+        """
         self._seen_so_far += bytes_amount
         self._tqdm.update(bytes_amount)
         if self.logger:
             self.logger.debug(f"{'Uploaded' if self._action == 'upload' else 'Downloaded'} {self._seen_so_far / (1024 * 1024):.2f} MB of {self._filename}")
 
     def close(self) -> None:
+        """
+        Close the progress bar.
+        """
         self._tqdm.close()
