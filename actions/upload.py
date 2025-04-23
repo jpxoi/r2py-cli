@@ -2,7 +2,6 @@ import sys
 import os
 import mimetypes
 from typing import Optional
-from utils.logger import Logger
 from utils.progress import TqdmProgress
 from utils.s3base import S3Base
 

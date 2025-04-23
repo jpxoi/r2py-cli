@@ -1,5 +1,4 @@
 import sys
-import os
 from utils.s3base import S3Base
 from utils.colors import Colors
 
