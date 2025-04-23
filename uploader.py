@@ -1,6 +1,5 @@
 import sys
 import os
-import logging
 import mimetypes
 import argparse
 from typing import Optional
@@ -8,6 +7,8 @@ from dotenv import load_dotenv
 import boto3
 from tqdm import tqdm
 from logger import Logger
+
+logger = Logger('upload').get_logger()
 
 class TqdmProgress:
     """Progress bar callback for S3 uploads."""
@@ -24,10 +25,15 @@ class TqdmProgress:
             dynamic_ncols=True
         )
         self._seen_so_far = 0
+        self.logger = logger
+        self.logger.info(f"Starting upload for {self._filename} ({self._size / (1024 * 1024):.2f} MB)")
+        self.logger.info(f"Progress bar initialized for {self._filename}")
+        self.logger.info(f"File size: {self._size / (1024 * 1024):.2f} MB")
 
     def __call__(self, bytes_amount: int) -> None:
         self._seen_so_far += bytes_amount
         self._tqdm.update(bytes_amount)
+        self.logger.debug(f"Uploaded {self._seen_so_far / (1024 * 1024):.2f} MB of {self._filename}")
 
     def close(self) -> None:
         self._tqdm.close()
@@ -39,16 +45,23 @@ class S3Uploader:
         self.secret_key = secret_key
         self.region = region
         self.s3_client = self._create_client()
+        self.logger = logger
 
     @staticmethod
     def get_env_var(name: str, default: Optional[str]=None, required: bool=False) -> str:
         value = os.getenv(name, default)
         if required and not value:
-            logging.error(f"Missing required environment variable: {name}")
+            logger.error(f"Missing required environment variable: {name}")
             sys.exit(1)
         return value
 
     def _create_client(self):
+        if self.region == "auto":
+            self.logger.warning("Region set to 'auto'. Routing requests automatically.")
+            self.region = None
+        else:
+            self.logger.info(f"Using region: {self.region}")
+        self.logger.info("Creating S3 client...")
         return boto3.client(
             service_name='s3',
             endpoint_url=self.endpoint_url,
@@ -59,14 +72,18 @@ class S3Uploader:
 
     def upload_file(self, filename: str, bucket_name: str, object_key: Optional[str] = None) -> None:
         if not os.path.isfile(filename):
-            logging.error(f"File not found: {filename}")
+            self.logger.error(f"File not found: {filename}")
             sys.exit(1)
         if not object_key:
+            self.logger.warning("Object key not provided. Using filename as object key.")
             object_key = os.path.basename(filename)
         mime_type, _ = mimetypes.guess_type(filename)
         if not mime_type:
+            self.logger.warning(f"Could not determine MIME type for {filename}. Defaulting to 'application/octet-stream'.")
             mime_type = "application/octet-stream"
+        self.logger.info(f"Uploading '{filename}' to '{bucket_name}/{object_key}' with MIME type '{mime_type}'.")
         progress_callback = TqdmProgress(filename)
+
         try:
             with open(filename, 'rb') as file:
                 self.s3_client.upload_fileobj(
@@ -76,9 +93,9 @@ class S3Uploader:
                     ExtraArgs={'ContentType': mime_type},
                     Callback=progress_callback
                 )
-            logging.info(f"File '{filename}' uploaded to '{bucket_name}/{object_key}'.")
+            self.logger.info(f"File '{filename}' uploaded to '{bucket_name}/{object_key}'.")
         except Exception as e:
-            logging.error(f"Error uploading file: {e}")
+            self.logger.error(f"Error uploading file: {e}")
             sys.exit(1)
         finally:
             progress_callback.close()
@@ -112,13 +129,10 @@ def main():
         region=args.region
     )
 
-    logger = Logger('upload').get_logger()
-    logger.info('This is an info message')
-
     try:
         uploader.upload_file(args.filename, args.bucket_name, args.object_key)
     except KeyboardInterrupt:
-        logging.warning("Upload cancelled by user.")
+        logger.warning("Upload cancelled by user.")
         sys.exit(1)
 
 if __name__ == "__main__":
