@@ -1,6 +1,6 @@
 import pytest
 from actions.download import S3Downloader
-from utils.s3base import S3ActionError
+from utils.s3base import S3ActionError, S3Base
 
 class DummyS3Client:
     def head_object(self, Bucket, Key):
@@ -21,6 +21,14 @@ class DummyProgress:
 @pytest.fixture(autouse=True)
 def patch_boto3_client(monkeypatch):
     monkeypatch.setattr("boto3.client", lambda *a, **kw: DummyS3Client())
+
+@pytest.fixture(autouse=True)
+def clear_clients_cache():
+    # Clear the clients cache before each test to avoid test interference
+    S3Base._clients = {}
+    yield
+    # Clear again after the test
+    S3Base._clients = {}
 
 def test_download_file_success(monkeypatch, tmp_path):
     test_file = tmp_path / "file.txt"

@@ -1,6 +1,6 @@
 import pytest
 from utils.s3base import S3ActionError
-from actions.upload import S3Uploader
+from actions.upload import S3Uploader, S3Base
 
 class DummyS3Client:
     def upload_fileobj(self, file, bucket, key, ExtraArgs=None, Callback=None):
@@ -19,6 +19,14 @@ def patch_boto3_client(monkeypatch):
     import actions.upload
     import utils.s3base
     monkeypatch.setattr("boto3.client", lambda *a, **kw: DummyS3Client())
+
+@pytest.fixture(autouse=True)
+def clear_clients_cache():
+    # Clear the clients cache before each test to avoid test interference
+    S3Base._clients = {}
+    yield
+    # Clear again after the test
+    S3Base._clients = {}
 
 def test_upload_file_success(monkeypatch, tmp_path):
     test_file = tmp_path / "file.txt"

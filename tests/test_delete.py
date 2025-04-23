@@ -1,6 +1,6 @@
 import pytest
 from actions.delete import S3Deleter
-from utils.s3base import S3ActionError
+from utils.s3base import S3ActionError, S3Base
 
 class DummyS3Client:
     def delete_bucket(self, Bucket):
@@ -15,6 +15,14 @@ class DummyS3Client:
 @pytest.fixture(autouse=True)
 def patch_boto3_client(monkeypatch):
     monkeypatch.setattr("boto3.client", lambda *a, **kw: DummyS3Client())
+
+@pytest.fixture(autouse=True)
+def clear_clients_cache():
+    # Clear the clients cache before each test to avoid test interference
+    S3Base._clients = {}
+    yield
+    # Clear again after the test
+    S3Base._clients = {}
 
 def test_delete_bucket_success():
     deleter = S3Deleter("url", "key", "secret", "auto")
