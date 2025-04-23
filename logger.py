@@ -23,13 +23,29 @@ class Logger:
         log_filename = f'{action}-{timestamp}.log'
         log_path = os.path.join(log_dir, log_filename)
         self.logger = logging.getLogger(action)
-        self.logger.setLevel(logging.INFO)
+        self.logger.setLevel(logging.DEBUG)
+
         file_handler = logging.FileHandler(log_path, mode='w')
-        file_formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(funcName)s: %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+        file_formatter = logging.Formatter('%(asctime)s | %(levelname)s | %(filename)s:%(lineno)s | %(process)d >>> %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
         file_handler.setFormatter(file_formatter)
-        file_handler.setLevel(logging.INFO)
+        file_handler.setLevel(logging.DEBUG)
+
+        # Colored formatter for stream handler
+        class ColoredFormatter(logging.Formatter):
+            COLORS = {
+                'WARNING': '\033[33m',  # yellow
+                'ERROR': '\033[31m',    # red
+                'CRITICAL': '\033[1;31m', # bold red
+                'RESET': '\033[0m',
+            }
+            def format(self, record):
+                msg = super().format(record)
+                color = self.COLORS.get(record.levelname, '')
+                reset = self.COLORS['RESET'] if color else ''
+                return f"{color}{msg}{reset}"
+
         stream_handler = logging.StreamHandler()
-        stream_formatter = logging.Formatter('%(message)s')
+        stream_formatter = ColoredFormatter('%(message)s')
         stream_handler.setFormatter(stream_formatter)
         stream_handler.setLevel(logging.WARNING)  # Only print WARNING and above to console
 
@@ -37,7 +53,6 @@ class Logger:
             self.logger.addHandler(file_handler)
             self.logger.addHandler(stream_handler)
         self.logger.propagate = False
-        self.logger.info(f"Logging to {log_path}")
 
     def get_logger(self):
         return self.logger

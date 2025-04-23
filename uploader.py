@@ -53,6 +53,7 @@ class S3Uploader:
         if required and not value:
             logger.error(f"Missing required environment variable: {name}")
             sys.exit(1)
+        logger.debug(f"Environment variable '{name}' loaded successfully.")
         return value
 
     def _create_client(self):
@@ -102,6 +103,7 @@ class S3Uploader:
 
     @staticmethod
     def parse_args():
+        logger.info("Parsing command line arguments.")
         parser = argparse.ArgumentParser(description="Upload a file to S3-compatible storage with progress bar.")
         parser.add_argument("bucket_name", help="Target bucket name")
         parser.add_argument("filename", help="Path to the local file to upload")
@@ -112,10 +114,12 @@ class S3Uploader:
             choices=["wnam", "enam", "weur", "eeur", "apac", "auto"],
             help="AWS region name (choices: wnam, enam, weur, eeur, apac, auto; default: auto)"
         )
+        logger.debug("Command line arguments parsed successfully.")
         return parser.parse_args()
 
 def main():
     load_dotenv()
+    logger.info("Loading environment variables from .env file.")
 
     ENDPOINT_URL = S3Uploader.get_env_var('ENDPOINT_URL', required=True)
     AWS_ACCESS_KEY_ID = S3Uploader.get_env_var('AWS_ACCESS_KEY_ID', required=True)
