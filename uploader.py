@@ -7,7 +7,7 @@ from typing import Optional
 from dotenv import load_dotenv
 import boto3
 from tqdm import tqdm
-from logger import setup_logging
+from logger import Logger
 
 class TqdmProgress:
     """Progress bar callback for S3 uploads."""
@@ -39,10 +39,6 @@ class S3Uploader:
         self.secret_key = secret_key
         self.region = region
         self.s3_client = self._create_client()
-
-    @staticmethod
-    def setup_logging() -> None:
-        setup_logging()
 
     @staticmethod
     def get_env_var(name: str, default: Optional[str]=None, required: bool=False) -> str:
@@ -102,7 +98,6 @@ class S3Uploader:
         return parser.parse_args()
 
 def main():
-    S3Uploader.setup_logging()
     load_dotenv()
 
     ENDPOINT_URL = S3Uploader.get_env_var('ENDPOINT_URL', required=True)
@@ -116,6 +111,9 @@ def main():
         secret_key=AWS_SECRET_ACCESS_KEY,
         region=args.region
     )
+
+    logger = Logger('upload').get_logger()
+    logger.info('This is an info message')
 
     try:
         uploader.upload_file(args.filename, args.bucket_name, args.object_key)
