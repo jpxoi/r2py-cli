@@ -8,21 +8,6 @@ from dotenv import load_dotenv
 import boto3
 from tqdm import tqdm
 
-def setup_logging() -> None:
-    """Configure logging format and level."""
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s [%(levelname)s] %(message)s"
-    )
-
-def get_env_var(name: str, default: Optional[str]=None, required: bool=False) -> str:
-    """Get environment variable or exit if required and missing."""
-    value = os.getenv(name, default)
-    if required and not value:
-        logging.error(f"Missing required environment variable: {name}")
-        sys.exit(1)
-    return value
-
 class TqdmProgress:
     """Progress bar callback for S3 uploads."""
     def __init__(self, filename: str):
@@ -46,63 +31,96 @@ class TqdmProgress:
     def close(self) -> None:
         self._tqdm.close()
 
-def upload_file(filename: str, bucket_name: str, object_key: str, s3_client) -> None:
-    """Upload a file to S3 with progress bar."""
-    if not os.path.isfile(filename):
-        logging.error(f"File not found: {filename}")
-        sys.exit(1)
-    mime_type, _ = mimetypes.guess_type(filename)
-    if not mime_type:
-        mime_type = "application/octet-stream"
-    progress_callback = TqdmProgress(filename)
-    try:
-        with open(filename, 'rb') as file:
-            s3_client.upload_fileobj(
-                file,
-                bucket_name,
-                object_key,
-                ExtraArgs={'ContentType': mime_type},
-                Callback=progress_callback
-            )
-        logging.info(f"File '{filename}' uploaded to '{bucket_name}/{object_key}'.")
-    except Exception as e:
-        logging.error(f"Error uploading file: {e}")
-        sys.exit(1)
-    finally:
-        progress_callback.close()
+class S3Uploader:
+    def __init__(self, endpoint_url: str, access_key: str, secret_key: str, region: str = "auto"):
+        self.endpoint_url = endpoint_url
+        self.access_key = access_key
+        self.secret_key = secret_key
+        self.region = region
+        self.s3_client = self._create_client()
 
-def parse_args():
-    parser = argparse.ArgumentParser(description="Upload a file to S3-compatible storage with progress bar.")
-    parser.add_argument("bucket_name", help="Target bucket name")
-    parser.add_argument("filename", help="Path to the local file to upload")
-    parser.add_argument("object_key", nargs="?", help="Object key in the bucket (defaults to filename)")
-    parser.add_argument("--region", default="auto", help="AWS region name (default: auto)")
-    return parser.parse_args()
+    @staticmethod
+    def setup_logging() -> None:
+        logging.basicConfig(
+            level=logging.INFO,
+            format="%(asctime)s [%(levelname)s] %(message)s"
+        )
+
+    @staticmethod
+    def get_env_var(name: str, default: Optional[str]=None, required: bool=False) -> str:
+        value = os.getenv(name, default)
+        if required and not value:
+            logging.error(f"Missing required environment variable: {name}")
+            sys.exit(1)
+        return value
+
+    def _create_client(self):
+        return boto3.client(
+            service_name='s3',
+            endpoint_url=self.endpoint_url,
+            aws_access_key_id=self.access_key,
+            aws_secret_access_key=self.secret_key,
+            region_name=self.region,
+        )
+
+    def upload_file(self, filename: str, bucket_name: str, object_key: Optional[str] = None) -> None:
+        if not os.path.isfile(filename):
+            logging.error(f"File not found: {filename}")
+            sys.exit(1)
+        if not object_key:
+            object_key = os.path.basename(filename)
+        mime_type, _ = mimetypes.guess_type(filename)
+        if not mime_type:
+            mime_type = "application/octet-stream"
+        progress_callback = TqdmProgress(filename)
+        try:
+            with open(filename, 'rb') as file:
+                self.s3_client.upload_fileobj(
+                    file,
+                    bucket_name,
+                    object_key,
+                    ExtraArgs={'ContentType': mime_type},
+                    Callback=progress_callback
+                )
+            logging.info(f"File '{filename}' uploaded to '{bucket_name}/{object_key}'.")
+        except Exception as e:
+            logging.error(f"Error uploading file: {e}")
+            sys.exit(1)
+        finally:
+            progress_callback.close()
+
+    @staticmethod
+    def parse_args():
+        parser = argparse.ArgumentParser(description="Upload a file to S3-compatible storage with progress bar.")
+        parser.add_argument("bucket_name", help="Target bucket name")
+        parser.add_argument("filename", help="Path to the local file to upload")
+        parser.add_argument("object_key", nargs="?", help="Object key in the bucket (defaults to filename)")
+        parser.add_argument(
+            "--region",
+            default="auto",
+            choices=["wnam", "enam", "weur", "eeur", "apac", "auto"],
+            help="AWS region name (choices: wnam, enam, weur, eeur, apac, auto; default: auto)"
+        )
+        return parser.parse_args()
 
 def main():
-    setup_logging()
+    S3Uploader.setup_logging()
     load_dotenv()
 
-    ENDPOINT_URL = get_env_var('ENDPOINT_URL', required=True)
-    AWS_ACCESS_KEY_ID = get_env_var('AWS_ACCESS_KEY_ID', required=True)
-    AWS_SECRET_ACCESS_KEY = get_env_var('AWS_SECRET_ACCESS_KEY', required=True)
+    ENDPOINT_URL = S3Uploader.get_env_var('ENDPOINT_URL', required=True)
+    AWS_ACCESS_KEY_ID = S3Uploader.get_env_var('AWS_ACCESS_KEY_ID', required=True)
+    AWS_SECRET_ACCESS_KEY = S3Uploader.get_env_var('AWS_SECRET_ACCESS_KEY', required=True)
 
-    args = parse_args()
-    bucket_name = args.bucket_name
-    filename = args.filename
-    object_key = args.object_key if args.object_key else os.path.basename(filename)
-    region = args.region
-
-    s3 = boto3.client(
-        service_name='s3',
+    args = S3Uploader.parse_args()
+    uploader = S3Uploader(
         endpoint_url=ENDPOINT_URL,
-        aws_access_key_id=AWS_ACCESS_KEY_ID,
-        aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
-        region_name=region,
+        access_key=AWS_ACCESS_KEY_ID,
+        secret_key=AWS_SECRET_ACCESS_KEY,
+        region=args.region
     )
 
     try:
-        upload_file(filename, bucket_name, object_key, s3)
+        uploader.upload_file(args.filename, args.bucket_name, args.object_key)
     except KeyboardInterrupt:
         logging.warning("Upload cancelled by user.")
         sys.exit(1)
