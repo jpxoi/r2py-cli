@@ -111,4 +111,4 @@ There is not yet a test suite for this CLI. Feel free to contribute by adding te
 
 ## License
 
-MIT
+This project is licensed under the GNU General Public License v3.0 (GPL-3.0). You can redistribute it and/or modify it under the terms of the GNU General Public License. See the [LICENSE](LICENSE) file for details.
