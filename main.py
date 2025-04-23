@@ -5,17 +5,9 @@ from actions.download import S3Downloader
 from actions.delete import S3Deleter
 from actions.list import S3Lister
 from utils.s3base import S3Base
-from enum import Enum
+from utils.region import Region
 
 app = typer.Typer(help="R2Py CLI Tool")
-
-class Region(str, Enum):
-    wnam = "wnam"
-    enam = "enam"
-    weur = "weur"
-    eeur = "eeur"
-    apac = "apac"
-    auto = "auto"
 
 @app.callback()
 def main_callback():
