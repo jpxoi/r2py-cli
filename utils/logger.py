@@ -20,7 +20,7 @@ class Logger:
 
         os.makedirs(log_dir, exist_ok=True)
         timestamp = datetime.now().strftime('%Y%m%d-%H%M%S')
-        log_filename = f'{action}-{timestamp}.log'
+        log_filename = f'{timestamp}-{action}.log'
         log_path = os.path.join(log_dir, log_filename)
         self.logger = logging.getLogger(action)
         self.logger.setLevel(logging.DEBUG)
