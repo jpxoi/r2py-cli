@@ -1,9 +1,10 @@
 from utils.s3base import S3Base
 from utils.colors import Colors
+from utils.region import Region
 
 class S3Deleter(S3Base):
     """Handles deleting objects from a Cloudflare R2 bucket using the S3-compatible API."""
-    def __init__(self, endpoint_url, access_key, secret_key, region):
+    def __init__(self, endpoint_url: str, access_key: str, secret_key: str, region: Region = Region.auto):
         """
         Initialize the deleter with S3 credentials and endpoint.
         Args:
@@ -15,7 +16,7 @@ class S3Deleter(S3Base):
         super().__init__(endpoint_url, access_key, secret_key, region)
         self.logger = S3Base.get_logger()
     
-    def delete_bucket(self, bucket_name):
+    def delete_bucket(self, bucket_name: str) -> None:
         """
         Delete the specified bucket.
         Args:
@@ -31,7 +32,7 @@ class S3Deleter(S3Base):
             self.logger.error(f"Failed to delete bucket: {e}")
             raise
 
-    def delete_object(self, bucket_name, object_key):
+    def delete_object(self, bucket_name: str, object_key: str) -> None:
         """
         Delete an object from the specified bucket.
         Args:

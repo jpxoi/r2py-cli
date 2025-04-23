@@ -1,10 +1,11 @@
 import sys
 from utils.s3base import S3Base
 from utils.colors import Colors
+from utils.region import Region
 
 class S3Lister(S3Base):
     """Handles listing buckets, files, etc. from a Cloudflare R2 bucket using the S3-compatible API."""
-    def __init__(self, endpoint_url: str, access_key: str, secret_key: str, region: str = "auto"):
+    def __init__(self, endpoint_url: str, access_key: str, secret_key: str, region: Region = Region.auto):
         """
         Initialize the lister with S3 credentials and endpoint.
         Args:

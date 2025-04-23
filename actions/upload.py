@@ -4,11 +4,11 @@ import mimetypes
 from typing import Optional
 from utils.progress import TqdmProgress
 from utils.s3base import S3Base
-
+from utils.region import Region
 
 class S3Uploader(S3Base):
     """Handles uploading files to a Cloudflare R2 bucket using the S3-compatible API."""
-    def __init__(self, endpoint_url: str, access_key: str, secret_key: str, region: str = "auto"):
+    def __init__(self, endpoint_url: str, access_key: str, secret_key: str, region: Region = Region.auto):
         """
         Initialize the uploader with S3 credentials and endpoint.
         Args:
