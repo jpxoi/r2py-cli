@@ -30,21 +30,3 @@ class S3Deleter(S3Base):
         except Exception as e:
             self.logger.error(f"Failed to delete object: {e}")
             raise
-
-    def abort_multipart_upload(self, bucket_name, object_key, upload_id):
-        """
-        Abort a multipart upload.
-        Args:
-            bucket_name (str): Target bucket name.
-            object_key (str): S3 object key for the multipart upload.
-            upload_id (str): The ID of the multipart upload to abort.
-        """
-        self.logger.info(f"Attempting to abort multipart upload for '{object_key}' with upload ID '{upload_id}' in bucket '{bucket_name}'...")
-        try:
-            response = self.s3.abort_multipart_upload(Bucket=bucket_name, Key=object_key, UploadId=upload_id)
-            self.logger.info(f"Abort response: {response}")
-            self.logger.info(f"Successfully aborted multipart upload for '{object_key}' in bucket '{bucket_name}'")
-            print(f"Successfully aborted multipart upload for '{object_key}' in bucket '{bucket_name}'")
-        except Exception as e:
-            self.logger.error(f"Failed to abort multipart upload: {e}")
-            raise

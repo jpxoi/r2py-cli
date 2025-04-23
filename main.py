@@ -2,6 +2,7 @@ import typer
 from dotenv import load_dotenv
 from actions.upload import S3Uploader
 from actions.download import S3Downloader
+from actions.abort import S3Aborter
 from actions.delete import S3Deleter
 from actions.list import S3Lister
 from utils.s3base import S3Base
@@ -85,7 +86,7 @@ def list(
 @app.command()
 def abort(bucket_name: str, object_key: str, upload_id: str, region: Region = typer.Option(Region.auto, help='AWS region name')):
     """Aborts a multipart upload in the S3 bucket."""
-    aborter = get_s3_action(S3Deleter, region)
+    aborter = get_s3_action(S3Aborter, region)
     try:
         aborter.abort_multipart_upload(bucket_name, object_key, upload_id)
     except Exception as e:
