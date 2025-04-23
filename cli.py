@@ -1,7 +1,7 @@
 import typer
 from dotenv import load_dotenv
 from actions import S3Uploader, S3Downloader, S3Aborter, S3Deleter, S3Lister, S3Creator
-from utils import S3Base, Region
+from utils import S3Base, S3ActionError,Region
 
 app = typer.Typer(help="R2Py CLI Tool")
 
@@ -52,6 +52,9 @@ def list(
                 typer.echo("Error: Must provide a bucket name unless using --buckets.", err=True)
                 raise typer.Exit(code=1)
             lister.list_objects(bucket_name)
+    except S3ActionError as e:
+        typer.echo(f"List error: {e}", err=True)
+        raise typer.Exit(code=1)
     except Exception as e:
         typer.echo(f"Error listing: {e}", err=True)
         raise typer.Exit(code=1)
@@ -62,6 +65,9 @@ def create(bucket_name: str, region: Region = typer.Option(Region.auto, help='AW
     creator = get_s3_action(S3Creator, region)
     try:
         creator.create_bucket(bucket_name)
+    except S3ActionError as e:
+        typer.echo(f"Create error: {e}", err=True)
+        raise typer.Exit(code=1)
     except Exception as e:
         typer.echo(f"Error creating bucket: {e}", err=True)
         raise typer.Exit(code=1)
@@ -75,12 +81,22 @@ def upload(bucket_name: str, filename: str, object_key: str = typer.Argument(Non
     except S3ActionError as e:
         typer.echo(f"Upload error: {e}", err=True)
         raise typer.Exit(code=1)
+    except Exception as e:
+        typer.echo(f"Error uploading: {e}", err=True)
+        raise typer.Exit(code=1)
 
 @app.command()
 def download(bucket_name: str, object_key: str, filename: str = typer.Argument(None), region: Region = typer.Option(Region.auto, help='AWS region name')):
     """Download a file from the S3 bucket."""
     downloader = get_s3_action(S3Downloader, region)
-    downloader.download_file(bucket_name, object_key, filename)
+    try:
+        downloader.download_file(bucket_name, object_key, filename)
+    except S3ActionError as e:
+        typer.echo(f"Download error: {e}", err=True)
+        raise typer.Exit(code=1)
+    except Exception as e:
+        typer.echo(f"Error downloading: {e}", err=True)
+        raise typer.Exit(code=1)
 
 @app.command()
 def delete(bucket_name: str, object_key: str = typer.Argument(None, help="Object key to delete (omit to delete the bucket)"), region: Region = typer.Option(Region.auto, help='AWS region name')):
@@ -93,14 +109,15 @@ def delete(bucket_name: str, object_key: str = typer.Argument(None, help="Object
                 typer.echo("Deletion cancelled.")
                 return
             deleter.delete_object(bucket_name, object_key)
-            
         else:
             confirm = typer.confirm(f"Are you sure you want to delete the bucket '{bucket_name}'?")
             if not confirm:
                 typer.echo("Deletion cancelled.")
                 return
             deleter.delete_bucket(bucket_name)
-
+    except S3ActionError as e:
+        typer.echo(f"Delete error: {e}", err=True)
+        raise typer.Exit(code=1)
     except Exception as e:
         typer.echo(f"Error deleting: {e}", err=True)
         raise typer.Exit(code=1)
@@ -115,6 +132,9 @@ def abort(bucket_name: str, object_key: str, upload_id: str, region: Region = ty
             typer.echo("Abortion cancelled.")
             return
         aborter.abort_multipart_upload(bucket_name, object_key, upload_id)
+    except S3ActionError as e:
+        typer.echo(f"Abort error: {e}", err=True)
+        raise typer.Exit(code=1)
     except Exception as e:
         typer.echo(f"Error aborting multipart upload: {e}", err=True)
         raise typer.Exit(code=1)
