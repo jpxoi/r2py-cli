@@ -1,41 +1,12 @@
 import sys
 import os
 import mimetypes
-import argparse
 from typing import Optional
 import boto3
-from tqdm import tqdm
 from utils.logger import Logger
+from utils.progress import TqdmProgress
 
 logger = Logger('upload').get_logger()
-
-class TqdmProgress:
-    """Progress bar callback for S3 uploads."""
-    def __init__(self, filename: str):
-        self._filename = filename
-        self._size = float(os.path.getsize(filename))
-        self._tqdm = tqdm(
-            total=self._size,
-            unit='B',
-            unit_scale=True,
-            unit_divisor=1024,
-            desc=os.path.basename(filename),
-            leave=True,
-            dynamic_ncols=True
-        )
-        self._seen_so_far = 0
-        self.logger = logger
-        self.logger.info(f"Starting upload for {self._filename} ({self._size / (1024 * 1024):.2f} MB)")
-        self.logger.info(f"Progress bar initialized for {self._filename}")
-        self.logger.info(f"File size: {self._size / (1024 * 1024):.2f} MB")
-
-    def __call__(self, bytes_amount: int) -> None:
-        self._seen_so_far += bytes_amount
-        self._tqdm.update(bytes_amount)
-        self.logger.debug(f"Uploaded {self._seen_so_far / (1024 * 1024):.2f} MB of {self._filename}")
-
-    def close(self) -> None:
-        self._tqdm.close()
 
 class S3Uploader:
     def __init__(self, endpoint_url: str, access_key: str, secret_key: str, region: str = "auto"):
@@ -73,7 +44,7 @@ class S3Uploader:
             self.logger.warning(f"Could not determine MIME type for {filename}. Defaulting to 'application/octet-stream'.")
             mime_type = "application/octet-stream"
         self.logger.info(f"Uploading '{filename}' to '{bucket_name}/{object_key}' with MIME type '{mime_type}'.")
-        progress_callback = TqdmProgress(filename)
+        progress_callback = TqdmProgress(filename, action="upload", logger=self.logger)
 
         try:
             with open(filename, 'rb') as file:
