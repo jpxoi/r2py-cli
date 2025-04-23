@@ -2,21 +2,26 @@ import os
 import sys
 import boto3
 from .logger import Logger
+from utils import Region
 
 logger = Logger('s3Client').get_logger()
+
+class S3ActionError(Exception):
+    """Custom exception for S3 action errors."""
+    pass
 
 class S3Base:
     """Base class for S3-compatible operations with Cloudflare R2."""
     _clients = {}
 
-    def __init__(self, endpoint_url, access_key, secret_key, region):
+    def __init__(self, endpoint_url: str, access_key: str, secret_key: str, region: Region = Region.auto):
         """
         Initialize the S3 client with credentials and endpoint, using a singleton pattern.
         Args:
             endpoint_url (str): S3-compatible endpoint URL.
             access_key (str): Access key ID.
             secret_key (str): Secret access key.
-            region (str): AWS region or 'auto'.
+            region (Region): AWS region or 'auto'.
         """
         self.logger = logger
         if region == 'auto':
@@ -37,25 +42,27 @@ class S3Base:
         self.s3 = S3Base._clients[key]
 
     @staticmethod
-    def get_env_var(name: str, default=None, required=False):
+    def get_env_var(name: str, default: str = None, required: bool = False) -> str:
         """
         Get an environment variable, optionally requiring it.
         Args:
             name (str): Environment variable name.
-            default: Default value if not set.
+            default (str): Default value if not set.
             required (bool): If True, exit if not set.
         Returns:
             str: The environment variable value.
+        Raises:
+            S3ActionError: If required variable is missing.
         """
         value = os.getenv(name, default)
         if required and not value:
             logger.error(f"Missing required environment variable: {name}")
-            sys.exit(1)
+            raise S3ActionError(f"Missing required environment variable: {name}")
         logger.debug(f"Environment variable '{name}' loaded successfully.")
         return value
 
     @staticmethod
-    def get_logger():
+    def get_logger() -> Logger:
         """
         Return the shared logger instance for S3 operations.
         """

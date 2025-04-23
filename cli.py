@@ -70,7 +70,11 @@ def create(bucket_name: str, region: Region = typer.Option(Region.auto, help='AW
 def upload(bucket_name: str, filename: str, object_key: str = typer.Argument(None), region: Region = typer.Option(Region.auto, help='AWS region name')):
     """Upload a file to the S3 bucket."""
     uploader = get_s3_action(S3Uploader, region)
-    uploader.upload_file(filename, bucket_name, object_key)
+    try:
+        uploader.upload_file(filename, bucket_name, object_key)
+    except S3ActionError as e:
+        typer.echo(f"Upload error: {e}", err=True)
+        raise typer.Exit(code=1)
 
 @app.command()
 def download(bucket_name: str, object_key: str, filename: str = typer.Argument(None), region: Region = typer.Option(Region.auto, help='AWS region name')):

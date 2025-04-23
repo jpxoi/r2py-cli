@@ -1,5 +1,5 @@
 import sys
-from utils import S3Base, Colors, Region
+from utils import S3Base, Colors, S3ActionError, Region
 
 class S3Lister(S3Base):
     """Handles listing buckets, files, etc. from a Cloudflare R2 bucket using the S3-compatible API."""
@@ -10,7 +10,7 @@ class S3Lister(S3Base):
             endpoint_url (str): S3-compatible endpoint URL.
             access_key (str): Access key ID.
             secret_key (str): Secret access key.
-            region (str): AWS region or 'auto'.
+            region (Region): AWS region or 'auto'.
         """
         super().__init__(endpoint_url, access_key, secret_key, region)
         self.logger = S3Base.get_logger()
@@ -18,6 +18,8 @@ class S3Lister(S3Base):
     def list_buckets(self, with_region: bool) -> None:
         """
         List all buckets in the S3-compatible storage.
+        Raises:
+            S3ActionError: If listing buckets fails.
         """
         try:
             response = self.s3.list_buckets()
@@ -37,10 +39,9 @@ class S3Lister(S3Base):
                             region = f"{Colors.FAIL}Error: {e}{Colors.ENDC}"
                         print(f"{region}")
                     print(f"  {Colors.OKCYAN}Created:{Colors.ENDC} {bucket['CreationDate']}\n")
-
         except Exception as e:
             self.logger.error(f"Error listing buckets: {e}")
-            sys.exit(1)
+            raise S3ActionError(f"Error listing buckets: {e}")
         finally:
             self.logger.info("Finished listing buckets.")
 
@@ -49,6 +50,8 @@ class S3Lister(S3Base):
         List all objects in the specified bucket.
         Args:
             bucket_name (str): Target bucket name.
+        Raises:
+            S3ActionError: If listing objects fails.
         """
         try:
             response = self.s3.list_objects_v2(Bucket=bucket_name)
@@ -61,7 +64,7 @@ class S3Lister(S3Base):
                 print(f"{Colors.WARNING}No objects found.{Colors.ENDC}")
         except Exception as e:
             self.logger.error(f"Error listing objects: {e}")
-            sys.exit(1)
+            raise S3ActionError(f"Error listing objects: {e}")
         finally:
             self.logger.info(f"Finished listing objects in bucket '{bucket_name}'.")
 
@@ -70,6 +73,8 @@ class S3Lister(S3Base):
         List all multipart uploads in the specified bucket.
         Args:
             bucket_name (str): Target bucket name.
+        Raises:
+            S3ActionError: If listing multipart uploads fails.
         """
         try:
             response = self.s3.list_multipart_uploads(Bucket=bucket_name)
@@ -82,7 +87,7 @@ class S3Lister(S3Base):
                 print(f"{Colors.WARNING}No multipart uploads found.{Colors.ENDC}")
         except Exception as e:
             self.logger.error(f"Error listing multipart uploads: {e}")
-            sys.exit(1)
+            raise S3ActionError(f"Error listing multipart uploads: {e}")
         finally:
             self.logger.info(f"Finished listing multipart uploads in bucket '{bucket_name}'.")
 
@@ -92,6 +97,8 @@ class S3Lister(S3Base):
         Args:
             bucket_name (str): Target bucket name.
             prefix (str): Prefix to filter objects.
+        Raises:
+            S3ActionError: If listing objects with prefix fails.
         """
         try:
             response = self.s3.list_objects_v2(Bucket=bucket_name, Prefix=prefix)
@@ -104,6 +111,6 @@ class S3Lister(S3Base):
                 print(f"{Colors.WARNING}No objects found with the specified prefix.{Colors.ENDC}")
         except Exception as e:
             self.logger.error(f"Error listing objects with prefix: {e}")
-            sys.exit(1)
+            raise S3ActionError(f"Error listing objects with prefix: {e}")
         finally:
             self.logger.info(f"Finished listing objects with prefix '{prefix}' in bucket '{bucket_name}'.")

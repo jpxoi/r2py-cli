@@ -1,4 +1,4 @@
-from utils import S3Base, Colors, Region
+from utils import S3Base, Colors, S3ActionError, Region
 
 class S3Deleter(S3Base):
     """Handles deleting objects from a Cloudflare R2 bucket using the S3-compatible API."""
@@ -9,7 +9,7 @@ class S3Deleter(S3Base):
             endpoint_url (str): S3-compatible endpoint URL.
             access_key (str): Access key ID.
             secret_key (str): Secret access key.
-            region (str): AWS region or 'auto'.
+            region (Region): AWS region or 'auto'.
         """
         super().__init__(endpoint_url, access_key, secret_key, region)
         self.logger = S3Base.get_logger()
@@ -19,6 +19,8 @@ class S3Deleter(S3Base):
         Delete the specified bucket.
         Args:
             bucket_name (str): Target bucket name.
+        Raises:
+            S3ActionError: If deletion fails.
         """
         self.logger.info(f"Attempting to delete bucket '{bucket_name}'...")
         try:
@@ -28,7 +30,7 @@ class S3Deleter(S3Base):
             print(f"{Colors.OKGREEN}Successfully deleted bucket '{bucket_name}'{Colors.ENDC}")
         except Exception as e:
             self.logger.error(f"Failed to delete bucket: {e}")
-            raise
+            raise S3ActionError(f"Failed to delete bucket: {e}")
 
     def delete_object(self, bucket_name: str, object_key: str) -> None:
         """
@@ -36,6 +38,8 @@ class S3Deleter(S3Base):
         Args:
             bucket_name (str): Target bucket name.
             object_key (str): S3 object key to delete.
+        Raises:
+            S3ActionError: If deletion fails.
         """
         self.logger.info(f"Attempting to delete object '{object_key}' from bucket '{bucket_name}'...")
         try:
@@ -45,4 +49,4 @@ class S3Deleter(S3Base):
             print(f"{Colors.OKGREEN}Successfully deleted object '{object_key}' from bucket '{bucket_name}'{Colors.ENDC}")
         except Exception as e:
             self.logger.error(f"Failed to delete object: {e}")
-            raise
+            raise S3ActionError(f"Failed to delete object: {e}")
