@@ -41,6 +41,13 @@ def test_upload_file_not_found(monkeypatch):
     with pytest.raises(S3ActionError):
         uploader.upload_file("/nonexistent/file.txt", "bucket", "object-key")
 
+def test_upload_file_no_object_key(monkeypatch, tmp_path, capsys):
+    test_file = tmp_path / "file.txt"
+    test_file.write_text("data")
+    monkeypatch.setattr("actions.upload.TqdmProgress", DummyProgress)
+    uploader = S3Uploader("url", "key", "secret", "auto")
+    uploader.upload_file(str(test_file), "bucket", None)
+
 def test_upload_file_failure(monkeypatch, tmp_path):
     test_file = tmp_path / "file.txt"
     test_file.write_text("data")
@@ -48,3 +55,20 @@ def test_upload_file_failure(monkeypatch, tmp_path):
     uploader = S3Uploader("url", "key", "secret", "auto")
     with pytest.raises(S3ActionError):
         uploader.upload_file(str(test_file), "fail-bucket", "object-key")
+
+def test_upload_file_no_mime_type(monkeypatch, tmp_path):
+    test_file = tmp_path / "file.txt"
+    test_file.write_text("data")
+    monkeypatch.setattr("actions.upload.TqdmProgress", DummyProgress)
+    monkeypatch.setattr("mimetypes.guess_type", lambda x: (None, None))
+    
+    # Use MagicMock to track function calls
+    from unittest.mock import MagicMock
+    mock_client = MagicMock()
+    monkeypatch.setattr("boto3.client", lambda *a, **kw: mock_client)
+    
+    uploader = S3Uploader("url", "key", "secret", "auto")
+    uploader.upload_file(str(test_file), "bucket", "object-key")
+    
+    # Check if the default MIME type is set to 'application/octet-stream'
+    assert mock_client.upload_fileobj.call_args[1]['ExtraArgs']['ContentType'] == 'application/octet-stream'

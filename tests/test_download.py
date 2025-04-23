@@ -1,3 +1,4 @@
+import os
 import pytest
 from actions.download import S3Downloader
 from utils.s3base import S3ActionError, S3Base
@@ -36,6 +37,14 @@ def test_download_file_success(monkeypatch, tmp_path):
     downloader = S3Downloader("url", "key", "secret", "auto")
     downloader.download_file("bucket", "object-key", str(test_file))
     assert test_file.exists()
+
+def test_download_file_no_filename(monkeypatch, tmp_path):
+    test_file = tmp_path / "file.txt"
+    monkeypatch.setattr("actions.download.TqdmProgress", DummyProgress)
+    downloader = S3Downloader("url", "key", "secret", "auto")
+    downloader.download_file("bucket", "object-key", None)
+    assert not test_file.exists()
+    os.remove("object-key")
 
 def test_download_file_missing_key(monkeypatch, tmp_path):
     monkeypatch.setattr("actions.download.TqdmProgress", DummyProgress)

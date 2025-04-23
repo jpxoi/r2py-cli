@@ -24,6 +24,10 @@ def test_create_bucket_success():
     creator = S3Creator("url", "key", "secret", "auto")
     creator.create_bucket("bucket")
 
+def test_create_bucket_with_region_success():
+    creator = S3Creator("url", "key", "secret", "auto")
+    creator.create_bucket("bucket", "us-west-2")
+
 def test_create_bucket_failure():
     creator = S3Creator("url", "key", "secret", "auto")
     with pytest.raises(S3ActionError):
