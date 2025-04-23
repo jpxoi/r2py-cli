@@ -1,17 +1,16 @@
 import sys
 import argparse
-from uploader import S3Uploader
-from downloader import S3Downloader
-from deleter import S3Deleter
 from dotenv import load_dotenv
+from actions.upload import S3Uploader
+from actions.download import S3Downloader
+from actions.delete import S3Deleter
 from utils.s3base import S3Base
-from utils.logger import Logger
 
-logger = Logger('main').get_logger()
+logger = S3Base.get_logger()  # Updated to use S3Base.get_logger()
 
 def main():
     load_dotenv()
-    parser = argparse.ArgumentParser(description="S3 Upload/Download/Delete Utility")
+    parser = argparse.ArgumentParser(description="R2 S3 CLI Tool")
     parser.add_argument('--action', required=True, choices=['upload', 'download', 'delete'], help='Action to perform: upload, download, or delete')
     parser.add_argument('bucket_name', help='S3 bucket name')
     parser.add_argument('file1', help='Source: Local file path (for upload) or S3 object key (for download)')
@@ -54,7 +53,8 @@ def main():
         object_key = args.file1
         try:
             deleter.delete_object(args.bucket_name, object_key)
-        except Exception:
+        except Exception as e:
+            logger.error(f"Error deleting object: {e}")
             sys.exit(1)
     else:
         logger.error(f"Unknown action: {args.action}")
