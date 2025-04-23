@@ -136,13 +136,5 @@ cython_debug/
 .DS_Store
 Thumbs.db
 
-# Videos
-*.mp4
-*.avi
-*.mov
-*.mkv
-*.flv
-*.wmv
-*.webm
-*.m4v
-*.3gp
+# LOGS
+logs
