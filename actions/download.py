@@ -1,6 +1,5 @@
 import sys
 import os
-import argparse
 from typing import Optional
 from utils.progress import TqdmProgress
 from utils.s3base import S3Base
