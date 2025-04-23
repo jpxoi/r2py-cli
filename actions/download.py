@@ -2,35 +2,13 @@ import sys
 import os
 import argparse
 from typing import Optional
-import boto3
-from utils.logger import Logger
 from utils.progress import TqdmProgress
+from utils.s3base import S3Base
 
-logger = Logger('download').get_logger()
-
-class S3Downloader:
+class S3Downloader(S3Base):
     def __init__(self, endpoint_url: str, access_key: str, secret_key: str, region: str = "auto"):
-        self.logger = logger
-        self.endpoint_url = endpoint_url
-        self.access_key = access_key
-        self.secret_key = secret_key
-        self.region = region
-        self.s3_client = self._create_client()
-
-    def _create_client(self):
-        if self.region == "auto":
-            self.logger.warning("Region set to 'auto'. Routing requests automatically.")
-            self.region = None
-        else:
-            self.logger.info(f"Using region: {self.region}")
-        self.logger.info("Creating S3 client...")
-        return boto3.client(
-            service_name='s3',
-            endpoint_url=self.endpoint_url,
-            aws_access_key_id=self.access_key,
-            aws_secret_access_key=self.secret_key,
-            region_name=self.region,
-        )
+        super().__init__(endpoint_url, access_key, secret_key, region)
+        self.logger = S3Base.get_logger()
 
     def download_file(self, bucket_name: str, object_key: str, filename: Optional[str] = None) -> None:
         if not object_key:
@@ -39,7 +17,7 @@ class S3Downloader:
         if not filename:
             filename = os.path.basename(object_key)
         try:
-            head = self.s3_client.head_object(Bucket=bucket_name, Key=object_key)
+            head = self.s3.head_object(Bucket=bucket_name, Key=object_key)
             total_size = head['ContentLength']
         except Exception as e:
             self.logger.error(f"Could not get object metadata: {e}")
@@ -47,7 +25,7 @@ class S3Downloader:
         progress_callback = TqdmProgress(filename, action="download", total_size=total_size, logger=self.logger)
         try:
             with open(filename, 'wb') as f:
-                self.s3_client.download_fileobj(
+                self.s3.download_fileobj(
                     bucket_name,
                     object_key,
                     f,
