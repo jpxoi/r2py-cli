@@ -1,10 +1,11 @@
 import sys
 from utils.s3base import S3Base
 from utils.colors import Colors
+from utils.region import Region
 
 class S3Creator(S3Base):
     """Handles creating buckets and managing S3 resources."""
-    def __init__(self, endpoint_url: str, access_key: str, secret_key: str, region: str = "auto"):
+    def __init__(self, endpoint_url: str, access_key: str, secret_key: str, region: Region = Region.auto):
         """
         Initialize the creator with S3 credentials and endpoint.
         Args:
@@ -16,23 +17,20 @@ class S3Creator(S3Base):
         super().__init__(endpoint_url, access_key, secret_key, region)
         self.logger = S3Base.get_logger()
 
-    def create_bucket(self, bucket_name: str, region: str = None) -> None:
+    def create_bucket(self, bucket_name: str, region: Region) -> None:
         """
         Create a new bucket in the S3-compatible storage.
         Args:
             bucket_name (str): Name of the bucket to create.
-            region (str): AWS region for the bucket (optional).
+            region (str): AWS region for the bucket.
         """
-        self.logger.info(f"Attempting to create bucket '{bucket_name}'...")
+        self.logger.info(f"Attempting to create bucket '{bucket_name}' in region '{region}'...")
         try:
-            if region:
-                self.s3.create_bucket(Bucket=bucket_name, CreateBucketConfiguration={'LocationConstraint': region})
-            else:
-                self.s3.create_bucket(Bucket=bucket_name)
-            self.logger.info(f"Successfully created bucket '{bucket_name}'")
-            print(f"{Colors.OKGREEN}Successfully created bucket '{bucket_name}'{Colors.ENDC}")
+            self.s3.create_bucket(Bucket=bucket_name, CreateBucketConfiguration={'LocationConstraint': region})
+            self.logger.info(f"Successfully created bucket '{bucket_name}' in region '{region}'")
+            print(f"{Colors.OKGREEN}Successfully created bucket '{bucket_name}' in region '{region}'{Colors.ENDC}")
         except Exception as e:
-            self.logger.error(f"Failed to create bucket: {e}")
+            self.logger.error(f"Failed to create bucket '{bucket_name}' in region '{region}': {e}")
             sys.exit(1)
         finally:
-            self.logger.info("Finished creating bucket.")
+            self.logger.info(f"Finished attempt to create bucket '{bucket_name}'.")
