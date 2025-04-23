@@ -3,6 +3,7 @@ import argparse
 from uploader import S3Uploader
 from downloader import S3Downloader
 from dotenv import load_dotenv
+from utils.s3base import S3Base
 from utils.logger import Logger
 
 logger = Logger('main').get_logger()
@@ -18,9 +19,9 @@ def main():
     args = parser.parse_args()
 
     # Load credentials from environment
-    ENDPOINT_URL = S3Uploader.get_env_var('ENDPOINT_URL', required=True)
-    AWS_ACCESS_KEY_ID = S3Uploader.get_env_var('AWS_ACCESS_KEY_ID', required=True)
-    AWS_SECRET_ACCESS_KEY = S3Uploader.get_env_var('AWS_SECRET_ACCESS_KEY', required=True)
+    ENDPOINT_URL = S3Base.get_env_var('ENDPOINT_URL', required=True)
+    AWS_ACCESS_KEY_ID = S3Base.get_env_var('AWS_ACCESS_KEY_ID', required=True)
+    AWS_SECRET_ACCESS_KEY = S3Base.get_env_var('AWS_SECRET_ACCESS_KEY', required=True)
 
     if args.action == 'upload':
         uploader = S3Uploader(

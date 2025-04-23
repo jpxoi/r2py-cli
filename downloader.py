@@ -46,15 +46,6 @@ class S3Downloader:
         self.region = region
         self.s3_client = self._create_client()
 
-    @staticmethod
-    def get_env_var(name: str, default: Optional[str]=None, required: bool=False) -> str:
-        value = os.getenv(name, default)
-        if required and not value:
-            logger.error(f"Missing required environment variable: {name}")
-            sys.exit(1)
-        logger.debug(f"Environment variable '{name}' loaded successfully.")
-        return value
-
     def _create_client(self):
         if self.region == "auto":
             self.logger.warning("Region set to 'auto'. Routing requests automatically.")
