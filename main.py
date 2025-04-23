@@ -2,6 +2,7 @@ import sys
 import argparse
 from uploader import S3Uploader
 from downloader import S3Downloader
+from deleter import S3Deleter
 from dotenv import load_dotenv
 from utils.s3base import S3Base
 from utils.logger import Logger
@@ -10,8 +11,8 @@ logger = Logger('main').get_logger()
 
 def main():
     load_dotenv()
-    parser = argparse.ArgumentParser(description="S3 Upload/Download Utility")
-    parser.add_argument('--action', required=True, choices=['upload', 'download'], help='Action to perform: upload or download')
+    parser = argparse.ArgumentParser(description="S3 Upload/Download/Delete Utility")
+    parser.add_argument('--action', required=True, choices=['upload', 'download', 'delete'], help='Action to perform: upload, download, or delete')
     parser.add_argument('bucket_name', help='S3 bucket name')
     parser.add_argument('file1', help='Source: Local file path (for upload) or S3 object key (for download)')
     parser.add_argument('file2', nargs='?', help='Destination: S3 object key (for upload) or local file path (for download)')
@@ -43,6 +44,18 @@ def main():
         object_key = args.file1
         filename = args.file2 if args.file2 else None
         downloader.download_file(args.bucket_name, object_key, filename)
+    elif args.action == 'delete':
+        deleter = S3Deleter(
+            endpoint_url=ENDPOINT_URL,
+            access_key=AWS_ACCESS_KEY_ID,
+            secret_key=AWS_SECRET_ACCESS_KEY,
+            region=args.region
+        )
+        object_key = args.file1
+        try:
+            deleter.delete_object(args.bucket_name, object_key)
+        except Exception:
+            sys.exit(1)
     else:
         logger.error(f"Unknown action: {args.action}")
         sys.exit(1)
