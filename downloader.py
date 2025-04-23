@@ -3,38 +3,10 @@ import os
 import argparse
 from typing import Optional
 import boto3
-from tqdm import tqdm
 from utils.logger import Logger
+from utils.progress import TqdmProgress
 
 logger = Logger('download').get_logger()
-
-class TqdmProgress:
-    """Progress bar callback for S3 downloads."""
-    def __init__(self, filename: str, total_size: int):
-        self._filename = filename
-        self._size = float(total_size)
-        self._tqdm = tqdm(
-            total=self._size,
-            unit='B',
-            unit_scale=True,
-            unit_divisor=1024,
-            desc=os.path.basename(filename),
-            leave=True,
-            dynamic_ncols=True
-        )
-        self._seen_so_far = 0
-        self.logger = logger
-        self.logger.info(f"Starting download for {self._filename} ({self._size / (1024 * 1024):.2f} MB)")
-        self.logger.info(f"Progress bar initialized for {self._filename}")
-        self.logger.info(f"File size: {self._size / (1024 * 1024):.2f} MB")
-
-    def __call__(self, bytes_amount: int) -> None:
-        self._seen_so_far += bytes_amount
-        self._tqdm.update(bytes_amount)
-        self.logger.debug(f"Downloaded {self._seen_so_far / (1024 * 1024):.2f} MB of {self._filename}")
-
-    def close(self) -> None:
-        self._tqdm.close()
 
 class S3Downloader:
     def __init__(self, endpoint_url: str, access_key: str, secret_key: str, region: str = "auto"):
@@ -72,7 +44,7 @@ class S3Downloader:
         except Exception as e:
             self.logger.error(f"Could not get object metadata: {e}")
             sys.exit(1)
-        progress_callback = TqdmProgress(filename, total_size)
+        progress_callback = TqdmProgress(filename, action="download", total_size=total_size, logger=self.logger)
         try:
             with open(filename, 'wb') as f:
                 self.s3_client.download_fileobj(
