@@ -1,4 +1,5 @@
 from utils.s3base import S3Base
+from utils.colors import Colors
 
 class S3Deleter(S3Base):
     """Handles deleting objects from a Cloudflare R2 bucket using the S3-compatible API."""
@@ -13,6 +14,22 @@ class S3Deleter(S3Base):
         """
         super().__init__(endpoint_url, access_key, secret_key, region)
         self.logger = S3Base.get_logger()
+    
+    def delete_bucket(self, bucket_name):
+        """
+        Delete the specified bucket.
+        Args:
+            bucket_name (str): Target bucket name.
+        """
+        self.logger.info(f"Attempting to delete bucket '{bucket_name}'...")
+        try:
+            response = self.s3.delete_bucket(Bucket=bucket_name)
+            self.logger.info(f"Delete response: {response}")
+            self.logger.info(f"Successfully deleted bucket '{bucket_name}'")
+            print(f"{Colors.OKGREEN}Successfully deleted bucket '{bucket_name}'{Colors.ENDC}")
+        except Exception as e:
+            self.logger.error(f"Failed to delete bucket: {e}")
+            raise
 
     def delete_object(self, bucket_name, object_key):
         """
@@ -26,7 +43,7 @@ class S3Deleter(S3Base):
             response = self.s3.delete_object(Bucket=bucket_name, Key=object_key)
             self.logger.info(f"Delete response: {response}")
             self.logger.info(f"Successfully deleted object '{object_key}' from bucket '{bucket_name}'")
-            print(f"Successfully deleted object '{object_key}' from bucket '{bucket_name}'")
+            print(f"{Colors.OKGREEN}Successfully deleted object '{object_key}' from bucket '{bucket_name}'{Colors.ENDC}")
         except Exception as e:
             self.logger.error(f"Failed to delete object: {e}")
             raise
