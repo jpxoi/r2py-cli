@@ -58,7 +58,7 @@ class Logger:
                 return f"{color}{msg}{reset}"
 
         stream_handler = logging.StreamHandler()
-        stream_formatter = ColoredFormatter('%(message)s')
+        stream_formatter = ColoredFormatter('%(levelname)s: %(message)s')
         stream_handler.setFormatter(stream_formatter)
         stream_handler.setLevel(logging.WARNING)  # Only print WARNING and above to console
 
