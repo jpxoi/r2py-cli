@@ -5,7 +5,7 @@ from typing import Optional
 from dotenv import load_dotenv
 import boto3
 from tqdm import tqdm
-from lib.logger import Logger
+from utils.logger import Logger
 
 logger = Logger('download').get_logger()
 
