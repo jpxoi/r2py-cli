@@ -1,4 +1,5 @@
 from utils.s3base import S3Base
+from utils.colors import Colors
 
 class S3Aborter(S3Base):
     """Handles deleting objects from a Cloudflare R2 bucket using the S3-compatible API."""
@@ -27,7 +28,9 @@ class S3Aborter(S3Base):
             response = self.s3.abort_multipart_upload(Bucket=bucket_name, Key=object_key, UploadId=upload_id)
             self.logger.info(f"Abort response: {response}")
             self.logger.info(f"Successfully aborted multipart upload for '{object_key}' in bucket '{bucket_name}'")
-            print(f"Successfully aborted multipart upload for '{object_key}' in bucket '{bucket_name}'")
+            print(f"{Colors.OKGREEN}Successfully aborted multipart upload for '{object_key}' in bucket '{bucket_name}'{Colors.ENDC}")
         except Exception as e:
             self.logger.error(f"Failed to abort multipart upload: {e}")
             raise
+        finally:
+            self.logger.info("Finished aborting multipart upload.")
