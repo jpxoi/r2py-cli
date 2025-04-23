@@ -16,7 +16,7 @@ class S3Lister(S3Base):
         super().__init__(endpoint_url, access_key, secret_key, region)
         self.logger = S3Base.get_logger()
 
-    def list_buckets(self, with_regions: bool) -> None:
+    def list_buckets(self, with_region: bool) -> None:
         """
         List all buckets in the S3-compatible storage.
         """
@@ -30,7 +30,7 @@ class S3Lister(S3Base):
             else:
                 for bucket in buckets:
                     print(f"{Colors.OKGREEN}Bucket:{Colors.ENDC} {Colors.BOLD}{bucket['Name']}{Colors.ENDC}")
-                    if with_regions:
+                    if with_region:
                         print(f"  {Colors.OKBLUE}Region:{Colors.ENDC} ", end='')
                         try:
                             region = self.s3.get_bucket_location(Bucket=bucket['Name'])['LocationConstraint']

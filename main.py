@@ -51,7 +51,7 @@ def list(
     bucket_name: str = typer.Argument(None, help="Bucket name (omit for --buckets)", show_default=False),
     region: Region = typer.Option(Region.auto, help='AWS region name'),
     buckets: bool = typer.Option(False, "--buckets", help="List all buckets"),
-    with_regions: bool = typer.Option(False, "--with-regions", help="Include regions in the bucket list"),
+    with_region: bool = typer.Option(False, "--with-region", help="Include regions in the bucket list"),
     multipart: bool = typer.Option(False, "--multipart", help="List multipart uploads in the bucket"),
     prefix: str = typer.Option(None, "--prefix", help="Prefix to filter objects")
 ):
@@ -59,7 +59,7 @@ def list(
     lister = get_s3_action(S3Lister, region)
     try:
         if buckets:
-            lister.list_buckets(with_regions)
+            lister.list_buckets(with_region)
         elif multipart:
             if not bucket_name:
                 typer.echo("Error: --multipart requires a bucket name.", err=True)
