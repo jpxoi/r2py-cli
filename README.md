@@ -199,7 +199,13 @@ python main.py [OPTIONS] COMMAND [ARGS]
 
 ## Testing
 
-There is not yet a test suite for this CLI. Feel free to contribute by adding tests for the existing functionality.
+There is a basic test suite included in the `tests` directory. You can run the tests using `pytest`:
+
+```bash
+pytest tests/
+```
+
+Make sure to set up your environment variables before running the tests.
 
 ## License
 
