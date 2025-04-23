@@ -83,38 +83,6 @@ python main.py [OPTIONS] COMMAND [ARGS]
 
 ### Commands
 
-- **upload**: Upload a file to a bucket
-
-    ```bash
-    python main.py upload [OPTIONS] BUCKET_NAME FILENAME [OBJECT_KEY]
-    ```
-
-  - `BUCKET_NAME`: The name of the R2 bucket.
-  - `FILENAME`: The path to the file you want to upload.
-  - `OBJECT_KEY`: The key under which to store the file in the bucket. If not provided, the filename will be used.
-  - `--region`: Specify the region for the bucket. This is optional and defaults to `auto`.
-
-- **download**: Download a file from a bucket
-
-    ```bash
-    python main.py download [OPTIONS] BUCKET_NAME OBJECT_KEY [FILENAME]
-    ```
-
-  - `BUCKET_NAME`: The name of the R2 bucket.
-  - `OBJECT_KEY`: The key of the object you want to download from the bucket.
-  - `FILENAME`: The path where the downloaded file will be saved. If not provided, the object key basename will be used.
-  - `--region`: Specify the region for the bucket. This is optional and defaults to `auto`.
-
-- **delete**: Delete an object from a bucket
-
-    ```bash
-    python main.py delete [OPTIONS] BUCKET_NAME OBJECT_KEY
-    ```
-
-  - `BUCKET_NAME`: The name of the R2 bucket.
-  - `OBJECT_KEY`: The key of the object you want to delete from the bucket.
-  - `--region`: Specify the region for the bucket. This is optional and defaults to `auto`.
-
 - **list**: List buckets, objects, or multipart uploads
 
     ```bash
@@ -134,6 +102,83 @@ python main.py [OPTIONS] COMMAND [ARGS]
   - List objects in a bucket: `python main.py list my-bucket`
   - List objects with prefix: `python main.py list my-bucket --prefix images/`
   - List multipart uploads: `python main.py list my-bucket --multipart`
+
+- **create**: Create a new bucket
+
+    ```bash
+    python main.py create [OPTIONS] BUCKET_NAME
+    ```
+
+  - `BUCKET_NAME`: The name of the R2 bucket to create.
+  - `--region`: Specify the region for the bucket. This is optional and defaults to `auto`.
+
+  **Example:**
+
+  ```bash
+  python main.py create my-new-bucket
+  ```
+
+- **upload**: Upload a file to a bucket
+
+    ```bash
+    python main.py upload [OPTIONS] BUCKET_NAME FILENAME [OBJECT_KEY]
+    ```
+
+  - `BUCKET_NAME`: The name of the R2 bucket.
+  - `FILENAME`: The path to the file you want to upload.
+  - `OBJECT_KEY`: The key under which to store the file in the bucket. If not provided, the filename will be used.
+  - `--region`: Specify the region for the bucket. This is optional and defaults to `auto`.
+
+  **Example:**
+
+  ```bash
+  python main.py upload my-bucket /path/to/file.txt
+  ```
+
+  This will upload `file.txt` to `my-bucket` with the same name (i.e., `file.txt`).
+  If you want to specify a different object key, you can do so like this:
+
+  ```bash
+    python main.py upload my-bucket /path/to/file.txt my-object-key
+  ```
+
+  This will upload `file.txt` to `my-bucket` with the key `my-object-key`.
+
+- **download**: Download a file from a bucket
+
+    ```bash
+    python main.py download [OPTIONS] BUCKET_NAME OBJECT_KEY [FILENAME]
+    ```
+
+  - `BUCKET_NAME`: The name of the R2 bucket.
+  - `OBJECT_KEY`: The key of the object you want to download from the bucket.
+  - `FILENAME`: The path where the downloaded file will be saved. If not provided, the object key basename will be used.
+  - `--region`: Specify the region for the bucket. This is optional and defaults to `auto`.
+
+    **Example:**
+
+    ```bash
+    python main.py download my-bucket my-object-key /path/to/save/file.txt
+    ```
+
+    This will download the object with key `my-object-key` from `my-bucket` and save it as `file.txt`.
+    If you want to save it with the same name as the object key, you can omit the `FILENAME` argument:
+
+    ```bash
+    python main.py download my-bucket my-object-key
+    ```
+
+    This will download the object with key `my-object-key` from `my-bucket` and save it with the same name.
+
+- **delete**: Delete an object from a bucket or delete a bucket if no object key is provided
+
+    ```bash
+    python main.py delete [OPTIONS] BUCKET_NAME OBJECT_KEY
+    ```
+
+  - `BUCKET_NAME`: The name of the R2 bucket.
+  - `OBJECT_KEY`: The key of the object you want to delete from the bucket. If not provided, the bucket will be deleted.
+  - `--region`: Specify the region for the bucket. This is optional and defaults to `auto`.
 
 - **abort**: Abort a multipart upload
 

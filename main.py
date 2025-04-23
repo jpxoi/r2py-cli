@@ -27,38 +27,6 @@ def get_s3_action(action_cls, region: Region):
     )
 
 @app.command()
-def create(bucket_name: str, region: Region = typer.Option(Region.auto, help='AWS region name')):
-    """Create a new S3 bucket."""
-    creator = get_s3_action(S3Creator, region)
-    try:
-        creator.create_bucket(bucket_name)
-    except Exception as e:
-        typer.echo(f"Error creating bucket: {e}", err=True)
-        raise typer.Exit(code=1)
-
-@app.command()
-def upload(bucket_name: str, filename: str, object_key: str = typer.Argument(None), region: Region = typer.Option(Region.auto, help='AWS region name')):
-    """Upload a file to the S3 bucket."""
-    uploader = get_s3_action(S3Uploader, region)
-    uploader.upload_file(filename, bucket_name, object_key)
-
-@app.command()
-def download(bucket_name: str, object_key: str, filename: str = typer.Argument(None), region: Region = typer.Option(Region.auto, help='AWS region name')):
-    """Download a file from the S3 bucket."""
-    downloader = get_s3_action(S3Downloader, region)
-    downloader.download_file(bucket_name, object_key, filename)
-
-@app.command()
-def delete(bucket_name: str, object_key: str, region: Region = typer.Option(Region.auto, help='AWS region name')):
-    """Delete an object from the S3 bucket."""
-    deleter = get_s3_action(S3Deleter, region)
-    try:
-        deleter.delete_object(bucket_name, object_key)
-    except Exception as e:
-        typer.echo(f"Error deleting object: {e}", err=True)
-        raise typer.Exit(code=1)
-
-@app.command()
 def list(
     bucket_name: str = typer.Argument(None, help="Bucket name (omit for --buckets)", show_default=False),
     region: Region = typer.Option(Region.auto, help='AWS region name'),
@@ -95,10 +63,59 @@ def list(
         raise typer.Exit(code=1)
 
 @app.command()
+def create(bucket_name: str, region: Region = typer.Option(Region.auto, help='AWS region name')):
+    """Create a new S3 bucket."""
+    creator = get_s3_action(S3Creator, region)
+    try:
+        creator.create_bucket(bucket_name)
+    except Exception as e:
+        typer.echo(f"Error creating bucket: {e}", err=True)
+        raise typer.Exit(code=1)
+
+@app.command()
+def upload(bucket_name: str, filename: str, object_key: str = typer.Argument(None), region: Region = typer.Option(Region.auto, help='AWS region name')):
+    """Upload a file to the S3 bucket."""
+    uploader = get_s3_action(S3Uploader, region)
+    uploader.upload_file(filename, bucket_name, object_key)
+
+@app.command()
+def download(bucket_name: str, object_key: str, filename: str = typer.Argument(None), region: Region = typer.Option(Region.auto, help='AWS region name')):
+    """Download a file from the S3 bucket."""
+    downloader = get_s3_action(S3Downloader, region)
+    downloader.download_file(bucket_name, object_key, filename)
+
+@app.command()
+def delete(bucket_name: str, object_key: str = typer.Argument(None, help="Object key to delete (omit to delete the bucket)"), region: Region = typer.Option(Region.auto, help='AWS region name')):
+    """Delete an object from the S3 bucket, or delete the bucket if no object key is provided."""
+    deleter = get_s3_action(S3Deleter, region)
+    try:
+        if object_key:
+            confirm = typer.confirm(f"Are you sure you want to delete the object '{object_key}' from bucket '{bucket_name}'?")
+            if not confirm:
+                typer.echo("Deletion cancelled.")
+                return
+            deleter.delete_object(bucket_name, object_key)
+            
+        else:
+            confirm = typer.confirm(f"Are you sure you want to delete the bucket '{bucket_name}'?")
+            if not confirm:
+                typer.echo("Deletion cancelled.")
+                return
+            deleter.delete_bucket(bucket_name)
+
+    except Exception as e:
+        typer.echo(f"Error deleting: {e}", err=True)
+        raise typer.Exit(code=1)
+
+@app.command()
 def abort(bucket_name: str, object_key: str, upload_id: str, region: Region = typer.Option(Region.auto, help='AWS region name')):
     """Aborts a multipart upload in the S3 bucket."""
     aborter = get_s3_action(S3Aborter, region)
     try:
+        confirm = typer.confirm(f"Are you sure you want to abort the multipart upload '{upload_id}' for object '{object_key}' in bucket '{bucket_name}'?")
+        if not confirm:
+            typer.echo("Abortion cancelled.")
+            return
         aborter.abort_multipart_upload(bucket_name, object_key, upload_id)
     except Exception as e:
         typer.echo(f"Error aborting multipart upload: {e}", err=True)
