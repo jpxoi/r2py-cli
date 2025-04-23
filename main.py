@@ -5,6 +5,7 @@ from actions.download import S3Downloader
 from actions.abort import S3Aborter
 from actions.delete import S3Deleter
 from actions.list import S3Lister
+from actions.create import S3Creator
 from utils.s3base import S3Base
 from utils.region import Region
 
@@ -24,6 +25,16 @@ def get_s3_action(action_cls, region: Region):
         secret_key=AWS_SECRET_ACCESS_KEY,
         region=region.value
     )
+
+@app.command()
+def create(bucket_name: str, region: Region = typer.Option(Region.auto, help='AWS region name')):
+    """Create a new S3 bucket."""
+    creator = get_s3_action(S3Creator, region)
+    try:
+        creator.create_bucket(bucket_name)
+    except Exception as e:
+        typer.echo(f"Error creating bucket: {e}", err=True)
+        raise typer.Exit(code=1)
 
 @app.command()
 def upload(bucket_name: str, filename: str, object_key: str = typer.Argument(None), region: Region = typer.Option(Region.auto, help='AWS region name')):
