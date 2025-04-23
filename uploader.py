@@ -1,75 +1,111 @@
 import sys
 import os
+import logging
+import mimetypes
+import argparse
+from typing import Optional
 from dotenv import load_dotenv
 import boto3
-import threading
+from tqdm import tqdm
 
-# Load environment variables from .env file
-load_dotenv()
+def setup_logging() -> None:
+    """Configure logging format and level."""
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s [%(levelname)s] %(message)s"
+    )
 
-ENDPOINT_URL = os.getenv('ENDPOINT_URL')
-AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
-AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
+def get_env_var(name: str, default: Optional[str]=None, required: bool=False) -> str:
+    """Get environment variable or exit if required and missing."""
+    value = os.getenv(name, default)
+    if required and not value:
+        logging.error(f"Missing required environment variable: {name}")
+        sys.exit(1)
+    return value
 
-# Check for required environment variables
-required_vars = {
-    'ENDPOINT_URL': ENDPOINT_URL,
-    'AWS_ACCESS_KEY_ID': AWS_ACCESS_KEY_ID,
-    'AWS_SECRET_ACCESS_KEY': AWS_SECRET_ACCESS_KEY
-}
-
-missing_vars = [name for name, value in required_vars.items() if not value]
-
-if missing_vars:
-    print(f"Error: Missing required environment variables: {', '.join(missing_vars)}")
-    print("Please ensure these are set in your .env file or environment.")
-    sys.exit(1)
-
-# Configurations
-bucket_name = 'jpxoi' # Replace with your bucket name
-filename = 'lisa_coachella_2025_week1.mp4' # Replace with your file path
-object_key = 'lisa_coachella_2025_week1.mp4' # Replace with your object key
-
-try:
-    with open(filename, 'rb') as file:
-        s3 = boto3.client(
-            service_name='s3',
-            endpoint_url=ENDPOINT_URL,
-            aws_access_key_id=AWS_ACCESS_KEY_ID,
-            aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
-            region_name='auto',
+class TqdmProgress:
+    """Progress bar callback for S3 uploads."""
+    def __init__(self, filename: str):
+        self._filename = filename
+        self._size = float(os.path.getsize(filename))
+        self._tqdm = tqdm(
+            total=self._size,
+            unit='B',
+            unit_scale=True,
+            unit_divisor=1024,
+            desc=os.path.basename(filename),
+            leave=True,
+            dynamic_ncols=True
         )
+        self._seen_so_far = 0
 
-        class ProgressPercentage(object):
-            def __init__(self, filename):
-                self._filename = filename
-                self._size = float(os.path.getsize(filename))
-                self._seen_so_far = 0
-                self._lock = threading.Lock()
+    def __call__(self, bytes_amount: int) -> None:
+        self._seen_so_far += bytes_amount
+        self._tqdm.update(bytes_amount)
 
-            def __call__(self, bytes_amount):
-                # To simplify, assume this is hooked up to a single filename
-                with self._lock:
-                    self._seen_so_far += bytes_amount
-                    percentage = (self._seen_so_far / self._size) * 100
-                    sys.stdout.write(
-                        "\r%s  %s / %s  (%.2f%%)" % (
-                            self._filename, self._seen_so_far, self._size,
-                            percentage))
-                    sys.stdout.flush()
+    def close(self) -> None:
+        self._tqdm.close()
 
-        progress_callback = ProgressPercentage(filename)
+def upload_file(filename: str, bucket_name: str, object_key: str, s3_client) -> None:
+    """Upload a file to S3 with progress bar."""
+    if not os.path.isfile(filename):
+        logging.error(f"File not found: {filename}")
+        sys.exit(1)
+    mime_type, _ = mimetypes.guess_type(filename)
+    if not mime_type:
+        mime_type = "application/octet-stream"
+    progress_callback = TqdmProgress(filename)
+    try:
+        with open(filename, 'rb') as file:
+            s3_client.upload_fileobj(
+                file,
+                bucket_name,
+                object_key,
+                ExtraArgs={'ContentType': mime_type},
+                Callback=progress_callback
+            )
+        logging.info(f"File '{filename}' uploaded to '{bucket_name}/{object_key}'.")
+    except Exception as e:
+        logging.error(f"Error uploading file: {e}")
+        sys.exit(1)
+    finally:
+        progress_callback.close()
 
-        s3.upload_fileobj(
-            file,
-            bucket_name,
-            object_key,
-            ExtraArgs={'ContentType': 'video/mp4'},
-            Callback=progress_callback
-        )
-        sys.stdout.write("\n")
-        sys.stdout.flush()
-    print("File uploaded successfully.")
-except Exception as e:
-    print(f"Error uploading file: {e}")
-    sys.exit(1)
+def parse_args():
+    parser = argparse.ArgumentParser(description="Upload a file to S3-compatible storage with progress bar.")
+    parser.add_argument("bucket_name", help="Target bucket name")
+    parser.add_argument("filename", help="Path to the local file to upload")
+    parser.add_argument("object_key", nargs="?", help="Object key in the bucket (defaults to filename)")
+    parser.add_argument("--region", default="auto", help="AWS region name (default: auto)")
+    return parser.parse_args()
+
+def main():
+    setup_logging()
+    load_dotenv()
+
+    ENDPOINT_URL = get_env_var('ENDPOINT_URL', required=True)
+    AWS_ACCESS_KEY_ID = get_env_var('AWS_ACCESS_KEY_ID', required=True)
+    AWS_SECRET_ACCESS_KEY = get_env_var('AWS_SECRET_ACCESS_KEY', required=True)
+
+    args = parse_args()
+    bucket_name = args.bucket_name
+    filename = args.filename
+    object_key = args.object_key if args.object_key else os.path.basename(filename)
+    region = args.region
+
+    s3 = boto3.client(
+        service_name='s3',
+        endpoint_url=ENDPOINT_URL,
+        aws_access_key_id=AWS_ACCESS_KEY_ID,
+        aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
+        region_name=region,
+    )
+
+    try:
+        upload_file(filename, bucket_name, object_key, s3)
+    except KeyboardInterrupt:
+        logging.warning("Upload cancelled by user.")
+        sys.exit(1)
+
+if __name__ == "__main__":
+    main()
