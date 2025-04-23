@@ -83,8 +83,8 @@ def list(
         raise typer.Exit(code=1)
 
 @app.command()
-def abortmultipart(bucket_name: str, object_key: str, upload_id: str, region: Region = typer.Option(Region.auto, help='AWS region name')):
-    """Abort a multipart upload."""
+def abort(bucket_name: str, object_key: str, upload_id: str, region: Region = typer.Option(Region.auto, help='AWS region name')):
+    """Aborts a multipart upload in the S3 bucket."""
     aborter = get_s3_action(S3Deleter, region)
     try:
         aborter.abort_multipart_upload(bucket_name, object_key, upload_id)
