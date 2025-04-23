@@ -1,6 +1,8 @@
-# R2 S3 Client
+# R2 S3 Client CLI
 
-This is a command-line tool to upload, download, or delete files to Cloudflare R2 using its S3-compatible API.
+This is a command-line tool to upload, download, or delete files to Cloudflare R2 using its S3-compatible API. It is built using Python and the `boto3` library, which provides a simple interface for interacting with S3-compatible storage services.
+The CLI is designed to be user-friendly and provides progress bars for uploads and downloads, as well as logging for all operations.
+It is a work in progress and may not cover all edge cases or error handling. Please use it with caution and report any issues you encounter.
 
 ## Features
 
