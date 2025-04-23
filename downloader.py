@@ -1,6 +1,5 @@
 import sys
 import os
-import mimetypes
 import argparse
 from typing import Optional
 from dotenv import load_dotenv
@@ -8,13 +7,13 @@ import boto3
 from tqdm import tqdm
 from logger import Logger
 
-logger = Logger('upload').get_logger()
+logger = Logger('download').get_logger()
 
 class TqdmProgress:
-    """Progress bar callback for S3 uploads."""
-    def __init__(self, filename: str):
+    """Progress bar callback for S3 downloads."""
+    def __init__(self, filename: str, total_size: int):
         self._filename = filename
-        self._size = float(os.path.getsize(filename))
+        self._size = float(total_size)
         self._tqdm = tqdm(
             total=self._size,
             unit='B',
@@ -26,19 +25,19 @@ class TqdmProgress:
         )
         self._seen_so_far = 0
         self.logger = logger
-        self.logger.info(f"Starting upload for {self._filename} ({self._size / (1024 * 1024):.2f} MB)")
+        self.logger.info(f"Starting download for {self._filename} ({self._size / (1024 * 1024):.2f} MB)")
         self.logger.info(f"Progress bar initialized for {self._filename}")
         self.logger.info(f"File size: {self._size / (1024 * 1024):.2f} MB")
 
     def __call__(self, bytes_amount: int) -> None:
         self._seen_so_far += bytes_amount
         self._tqdm.update(bytes_amount)
-        self.logger.debug(f"Uploaded {self._seen_so_far / (1024 * 1024):.2f} MB of {self._filename}")
+        self.logger.debug(f"Downloaded {self._seen_so_far / (1024 * 1024):.2f} MB of {self._filename}")
 
     def close(self) -> None:
         self._tqdm.close()
 
-class S3Uploader:
+class S3Downloader:
     def __init__(self, endpoint_url: str, access_key: str, secret_key: str, region: str = "auto"):
         self.logger = logger
         self.endpoint_url = endpoint_url
@@ -71,32 +70,30 @@ class S3Uploader:
             region_name=self.region,
         )
 
-    def upload_file(self, filename: str, bucket_name: str, object_key: Optional[str] = None) -> None:
-        if not os.path.isfile(filename):
-            self.logger.error(f"File not found: {filename}")
-            sys.exit(1)
+    def download_file(self, bucket_name: str, object_key: str, filename: Optional[str] = None) -> None:
         if not object_key:
-            self.logger.warning("Object key not provided. Using filename as object key.")
-            object_key = os.path.basename(filename)
-        mime_type, _ = mimetypes.guess_type(filename)
-        if not mime_type:
-            self.logger.warning(f"Could not determine MIME type for {filename}. Defaulting to 'application/octet-stream'.")
-            mime_type = "application/octet-stream"
-        self.logger.info(f"Uploading '{filename}' to '{bucket_name}/{object_key}' with MIME type '{mime_type}'.")
-        progress_callback = TqdmProgress(filename)
-
+            self.logger.warning("Object key not provided.")
+            sys.exit(1)
+        if not filename:
+            filename = os.path.basename(object_key)
         try:
-            with open(filename, 'rb') as file:
-                self.s3_client.upload_fileobj(
-                    file,
+            head = self.s3_client.head_object(Bucket=bucket_name, Key=object_key)
+            total_size = head['ContentLength']
+        except Exception as e:
+            self.logger.error(f"Could not get object metadata: {e}")
+            sys.exit(1)
+        progress_callback = TqdmProgress(filename, total_size)
+        try:
+            with open(filename, 'wb') as f:
+                self.s3_client.download_fileobj(
                     bucket_name,
                     object_key,
-                    ExtraArgs={'ContentType': mime_type},
+                    f,
                     Callback=progress_callback
                 )
-            self.logger.info(f"File '{filename}' uploaded to '{bucket_name}/{object_key}'.")
+            self.logger.info(f"File '{object_key}' downloaded from '{bucket_name}' to '{filename}'.")
         except Exception as e:
-            self.logger.error(f"Error uploading file: {e}")
+            self.logger.error(f"Error downloading file: {e}")
             sys.exit(1)
         finally:
             progress_callback.close()
@@ -104,10 +101,10 @@ class S3Uploader:
     @staticmethod
     def parse_args():
         logger.info("Parsing command line arguments.")
-        parser = argparse.ArgumentParser(description="Upload a file to S3-compatible storage with progress bar.")
-        parser.add_argument("bucket_name", help="Target bucket name")
-        parser.add_argument("filename", help="Path to the local file to upload")
-        parser.add_argument("object_key", nargs="?", help="Object key in the bucket (defaults to filename)")
+        parser = argparse.ArgumentParser(description="Download a file from S3-compatible storage with progress bar.")
+        parser.add_argument("bucket_name", help="Source bucket name")
+        parser.add_argument("object_key", help="Object key in the bucket")
+        parser.add_argument("filename", nargs="?", help="Destination local filename (defaults to object key)")
         parser.add_argument(
             "--region",
             default="auto",
@@ -121,12 +118,12 @@ def main():
     load_dotenv()
     logger.info("Loading environment variables from .env file.")
 
-    ENDPOINT_URL = S3Uploader.get_env_var('ENDPOINT_URL', required=True)
-    AWS_ACCESS_KEY_ID = S3Uploader.get_env_var('AWS_ACCESS_KEY_ID', required=True)
-    AWS_SECRET_ACCESS_KEY = S3Uploader.get_env_var('AWS_SECRET_ACCESS_KEY', required=True)
+    ENDPOINT_URL = S3Downloader.get_env_var('ENDPOINT_URL', required=True)
+    AWS_ACCESS_KEY_ID = S3Downloader.get_env_var('AWS_ACCESS_KEY_ID', required=True)
+    AWS_SECRET_ACCESS_KEY = S3Downloader.get_env_var('AWS_SECRET_ACCESS_KEY', required=True)
 
-    args = S3Uploader.parse_args()
-    uploader = S3Uploader(
+    args = S3Downloader.parse_args()
+    downloader = S3Downloader(
         endpoint_url=ENDPOINT_URL,
         access_key=AWS_ACCESS_KEY_ID,
         secret_key=AWS_SECRET_ACCESS_KEY,
@@ -134,9 +131,9 @@ def main():
     )
 
     try:
-        uploader.upload_file(args.filename, args.bucket_name, args.object_key)
+        downloader.download_file(args.bucket_name, args.object_key, args.filename)
     except KeyboardInterrupt:
-        logger.warning("Upload cancelled by user.")
+        logger.warning("Download cancelled by user.")
         sys.exit(1)
 
 if __name__ == "__main__":
