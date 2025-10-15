@@ -36,7 +36,7 @@ class TestCliCommands:
         result = runner.invoke(app, ["list", "--buckets"])
 
         assert result.exit_code == 0
-        mock_get_s3_action.assert_called_once_with(pytest.importorskip("actions").S3Lister, Region.auto)
+        mock_get_s3_action.assert_called_once_with(pytest.importorskip("actions").S3Lister, Region.AUTO)
         mock_lister.list_buckets.assert_called_once_with(False)
 
     def test_list_buckets_with_region(self, mock_env_vars, mock_get_s3_action):
@@ -106,7 +106,7 @@ class TestCliCommands:
         result = runner.invoke(app, ["create", "test-bucket"])
         
         assert result.exit_code == 0
-        mock_get_s3_action.assert_called_once_with(pytest.importorskip("actions").S3Creator, Region.auto)
+        mock_get_s3_action.assert_called_once_with(pytest.importorskip("actions").S3Creator, Region.AUTO)
         mock_creator.create_bucket.assert_called_once_with("test-bucket")
 
     def test_create_bucket_with_s3actionerror(self, mock_env_vars, mock_get_s3_action):
@@ -118,7 +118,7 @@ class TestCliCommands:
         
         assert result.exit_code == 1
         assert "Create error: Test error" in result.stdout
-        mock_get_s3_action.assert_called_once_with(pytest.importorskip("actions").S3Creator, Region.auto)
+        mock_get_s3_action.assert_called_once_with(pytest.importorskip("actions").S3Creator, Region.AUTO)
 
     def test_create_bucket_with_exception(self, mock_env_vars, mock_get_s3_action):
         mock_creator = MagicMock()
@@ -129,7 +129,7 @@ class TestCliCommands:
         
         assert result.exit_code == 1
         assert "Error creating bucket: Test exception" in result.stdout
-        mock_get_s3_action.assert_called_once_with(pytest.importorskip("actions").S3Creator, Region.auto)
+        mock_get_s3_action.assert_called_once_with(pytest.importorskip("actions").S3Creator, Region.AUTO)
 
     def test_upload_file(self, mock_env_vars, mock_get_s3_action):
         mock_uploader = MagicMock()
@@ -138,7 +138,7 @@ class TestCliCommands:
         result = runner.invoke(app, ["upload", "test-bucket", "test-file.txt", "test-key"])
         
         assert result.exit_code == 0
-        mock_get_s3_action.assert_called_once_with(pytest.importorskip("actions").S3Uploader, Region.auto)
+        mock_get_s3_action.assert_called_once_with(pytest.importorskip("actions").S3Uploader, Region.AUTO)
         mock_uploader.upload_file.assert_called_once_with("test-file.txt", "test-bucket", "test-key")
 
     def test_upload_file_no_object_key(self, mock_env_vars, mock_get_s3_action):
@@ -148,7 +148,7 @@ class TestCliCommands:
         result = runner.invoke(app, ["upload", "test-bucket", "test-file.txt"])
         
         assert result.exit_code == 0
-        mock_get_s3_action.assert_called_once_with(pytest.importorskip("actions").S3Uploader, Region.auto)
+        mock_get_s3_action.assert_called_once_with(pytest.importorskip("actions").S3Uploader, Region.AUTO)
         mock_uploader.upload_file.assert_called_once_with("test-file.txt", "test-bucket", None)
     
     def test_upload_file_with_s3actionerror(self, mock_env_vars, mock_get_s3_action):
@@ -160,7 +160,7 @@ class TestCliCommands:
         
         assert result.exit_code == 1
         assert "Upload error: Test error" in result.stdout
-        mock_get_s3_action.assert_called_once_with(pytest.importorskip("actions").S3Uploader, Region.auto)
+        mock_get_s3_action.assert_called_once_with(pytest.importorskip("actions").S3Uploader, Region.AUTO)
 
     def test_upload_file_with_exception(self, mock_env_vars, mock_get_s3_action):
         mock_uploader = MagicMock()
@@ -171,7 +171,7 @@ class TestCliCommands:
         
         assert result.exit_code == 1
         assert "Error uploading: Test exception" in result.stdout
-        mock_get_s3_action.assert_called_once_with(pytest.importorskip("actions").S3Uploader, Region.auto)
+        mock_get_s3_action.assert_called_once_with(pytest.importorskip("actions").S3Uploader, Region.AUTO)
 
     def test_download_file(self, mock_env_vars, mock_get_s3_action):
         mock_downloader = MagicMock()
@@ -180,7 +180,7 @@ class TestCliCommands:
         result = runner.invoke(app, ["download", "test-bucket", "test-key", "test-file.txt"])
         
         assert result.exit_code == 0
-        mock_get_s3_action.assert_called_once_with(pytest.importorskip("actions").S3Downloader, Region.auto)
+        mock_get_s3_action.assert_called_once_with(pytest.importorskip("actions").S3Downloader, Region.AUTO)
         mock_downloader.download_file.assert_called_once_with("test-bucket", "test-key", "test-file.txt")
 
     def test_download_file_no_object_key(self, mock_env_vars, mock_get_s3_action):
@@ -190,7 +190,7 @@ class TestCliCommands:
         result = runner.invoke(app, ["download", "test-bucket", "test-key"])
         
         assert result.exit_code == 0
-        mock_get_s3_action.assert_called_once_with(pytest.importorskip("actions").S3Downloader, Region.auto)
+        mock_get_s3_action.assert_called_once_with(pytest.importorskip("actions").S3Downloader, Region.AUTO)
         mock_downloader.download_file.assert_called_once_with("test-bucket", "test-key", None)
 
     def test_download_file_with_s3actionerror(self, mock_env_vars, mock_get_s3_action):
@@ -202,7 +202,7 @@ class TestCliCommands:
         
         assert result.exit_code == 1
         assert "Download error: Test error" in result.stdout
-        mock_get_s3_action.assert_called_once_with(pytest.importorskip("actions").S3Downloader, Region.auto)
+        mock_get_s3_action.assert_called_once_with(pytest.importorskip("actions").S3Downloader, Region.AUTO)
 
     def test_download_file_with_exception(self, mock_env_vars, mock_get_s3_action):
         mock_downloader = MagicMock()
@@ -213,7 +213,7 @@ class TestCliCommands:
         
         assert result.exit_code == 1
         assert "Error downloading: Test exception" in result.stdout
-        mock_get_s3_action.assert_called_once_with(pytest.importorskip("actions").S3Downloader, Region.auto)
+        mock_get_s3_action.assert_called_once_with(pytest.importorskip("actions").S3Downloader, Region.AUTO)
 
     def test_delete_object(self, mock_env_vars, mock_get_s3_action):
         mock_deleter = MagicMock()

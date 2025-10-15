@@ -1,3 +1,11 @@
+"""
+Logger utility module for the R2Py CLI Tool.
+
+Provides a singleton Logger class that configures both file and colored console logging
+for CLI actions, with log rotation by timestamp. The logger is designed for consistent,
+readable output in both log files and terminal output, supporting colored log levels in the console.
+"""
+
 import logging
 import os
 from datetime import datetime
@@ -40,12 +48,17 @@ class Logger:
         self.logger.setLevel(logging.DEBUG)
 
         file_handler = logging.FileHandler(log_path, mode='w')
-        file_formatter = logging.Formatter('%(asctime)s | %(levelname)s | %(filename)s:%(lineno)s | %(process)d >>> %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+        file_formatter = logging.Formatter(
+            '%(asctime)s | %(levelname)s | %(filename)s:%(lineno)s | '
+            '%(process)d >>> %(message)s',
+            datefmt='%Y-%m-%d %H:%M:%S'
+        )
         file_handler.setFormatter(file_formatter)
         file_handler.setLevel(logging.DEBUG)
 
         # Colored formatter for stream handler
         class ColoredFormatter(logging.Formatter):
+            """Colored formatter for stream handler."""
             LEVEL_COLORS = {
                 'WARNING': Colors.WARNING,
                 'ERROR': Colors.ERROR,

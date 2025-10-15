@@ -1,5 +1,12 @@
+"""
+Base S3 Utility for R2Py CLI.
+
+S3Base manages a singleton S3 client for the CLI, supporting custom endpoints,
+credentials, and region selection (incl. 'auto'). Centralizes config and logging.
+All S3 actions should inherit from this class for consistency.
+"""
+
 import os
-import sys
 import boto3
 from utils import Region
 from .logger import Logger
@@ -8,13 +15,24 @@ logger = Logger('s3Client').get_logger()
 
 class S3ActionError(Exception):
     """Custom exception for S3 action errors."""
-    pass
+    def __init__(self, message: str):
+        """Initialize the exception with a message."""
+        self.message = message
+        super().__init__(self.message)
+        self.logger = Logger('s3Client').get_logger()
+        self.logger.error("S3 action error: %s", self.message)
 
 class S3Base:
     """Base class for S3-compatible operations with Cloudflare R2."""
     _clients = {}
 
-    def __init__(self, endpoint_url: str, access_key: str, secret_key: str, region: Region = Region.auto):
+    def __init__(
+        self,
+        endpoint_url: str,
+        access_key: str,
+        secret_key: str,
+        region: Region = Region.AUTO,
+    ):
         """
         Initialize the S3 client with credentials and endpoint, using a singleton pattern.
         Args:
@@ -28,7 +46,7 @@ class S3Base:
             self.logger.warning("Region set to 'auto'. Routing requests automatically.")
             region = None
         else:
-            self.logger.info(f"Using region: {region}")
+            self.logger.info("Using region: %s", region)
         self.logger.info("Creating or reusing S3 client...")
         key = (endpoint_url, access_key, secret_key, region)
         if key not in S3Base._clients:
@@ -56,9 +74,9 @@ class S3Base:
         """
         value = os.getenv(name, default)
         if required and not value:
-            logger.error(f"Missing required environment variable: {name}")
+            logger.error("Missing required environment variable: %s", name)
             raise S3ActionError(f"Missing required environment variable: {name}")
-        logger.debug(f"Environment variable '{name}' loaded successfully.")
+        logger.debug("Environment variable '%s' loaded successfully.", name)
         return value
 
     @staticmethod

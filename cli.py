@@ -1,3 +1,10 @@
+"""
+CLI module for R2Py CLI.
+
+This module defines the CLI for the R2Py CLI tool.
+It uses Typer to define the commands and options for the tool.
+"""
+
 import typer
 from dotenv import load_dotenv
 from actions import S3Uploader, S3Downloader, S3Aborter, S3Deleter, S3Lister, S3Creator
@@ -7,27 +14,52 @@ app = typer.Typer(help="R2Py CLI Tool")
 
 @app.callback()
 def main_callback():
+    """Callback for the main command."""
     load_dotenv()
 
 def get_s3_action(action_cls, region: Region):
-    ENDPOINT_URL = S3Base.get_env_var('ENDPOINT_URL', required=True)
-    AWS_ACCESS_KEY_ID = S3Base.get_env_var('AWS_ACCESS_KEY_ID', required=True)
-    AWS_SECRET_ACCESS_KEY = S3Base.get_env_var('AWS_SECRET_ACCESS_KEY', required=True)
+    """Get the S3 action class."""
+    endpoint_url = S3Base.get_env_var('ENDPOINT_URL', required=True)
+    aws_access_key_id = S3Base.get_env_var('AWS_ACCESS_KEY_ID', required=True)
+    aws_secret_access_key = S3Base.get_env_var('AWS_SECRET_ACCESS_KEY', required=True)
     return action_cls(
-        endpoint_url=ENDPOINT_URL,
-        access_key=AWS_ACCESS_KEY_ID,
-        secret_key=AWS_SECRET_ACCESS_KEY,
+        endpoint_url=endpoint_url,
+        access_key=aws_access_key_id,
+        secret_key=aws_secret_access_key,
         region=region.value
     )
 
-@app.command()
-def list(
-    bucket_name: str = typer.Argument(None, help="Bucket name (omit for --buckets)", show_default=False),
-    region: Region = typer.Option(Region.auto, help='AWS region name'),
-    buckets: bool = typer.Option(False, "--buckets", help="List all buckets"),
-    with_region: bool = typer.Option(False, "--with-region", help="Include regions in the bucket list"),
-    multipart: bool = typer.Option(False, "--multipart", help="List multipart uploads in the bucket"),
-    prefix: str = typer.Option(None, "--prefix", help="Prefix to filter objects")
+@app.command(name="list")
+def list_command(
+    bucket_name: str = typer.Argument(
+        None,
+        help="Bucket name (omit for --buckets)",
+        show_default=False
+    ),
+    region: Region = typer.Option(
+        Region.AUTO,
+        help='AWS region name'
+    ),
+    buckets: bool = typer.Option(
+        False,
+        "--buckets",
+        help="List all buckets"
+    ),
+    with_region: bool = typer.Option(
+        False,
+        "--with-region",
+        help="Include regions in the bucket list"
+    ),
+    multipart: bool = typer.Option(
+        False,
+        "--multipart",
+        help="List multipart uploads in the bucket"
+    ),
+    prefix: str = typer.Option(
+        None,
+        "--prefix",
+        help="Prefix to filter objects"
+    )
 ):
     """List buckets, objects, or multipart uploads in the S3 bucket."""
     lister = get_s3_action(S3Lister, region)
@@ -60,7 +92,10 @@ def list(
         raise typer.Exit(code=1)
 
 @app.command()
-def create(bucket_name: str, region: Region = typer.Option(Region.auto, help='AWS region name')):
+def create(
+    bucket_name: str,
+    region: Region = typer.Option(Region.AUTO, help='AWS region name')
+):
     """Create a new S3 bucket."""
     creator = get_s3_action(S3Creator, region)
     try:
@@ -73,7 +108,12 @@ def create(bucket_name: str, region: Region = typer.Option(Region.auto, help='AW
         raise typer.Exit(code=1)
 
 @app.command()
-def upload(bucket_name: str, filename: str, object_key: str = typer.Argument(None), region: Region = typer.Option(Region.auto, help='AWS region name')):
+def upload(
+    bucket_name: str,
+    filename: str,
+    object_key: str = typer.Argument(None),
+    region: Region = typer.Option(Region.AUTO, help='AWS region name')
+):
     """Upload a file to the S3 bucket."""
     uploader = get_s3_action(S3Uploader, region)
     try:
@@ -86,7 +126,12 @@ def upload(bucket_name: str, filename: str, object_key: str = typer.Argument(Non
         raise typer.Exit(code=1)
 
 @app.command()
-def download(bucket_name: str, object_key: str, filename: str = typer.Argument(None), region: Region = typer.Option(Region.auto, help='AWS region name')):
+def download(
+    bucket_name: str,
+    object_key: str,
+    filename: str = typer.Argument(None),
+    region: Region = typer.Option(Region.AUTO, help='AWS region name')
+):
     """Download a file from the S3 bucket."""
     downloader = get_s3_action(S3Downloader, region)
     try:
@@ -99,12 +144,25 @@ def download(bucket_name: str, object_key: str, filename: str = typer.Argument(N
         raise typer.Exit(code=1)
 
 @app.command()
-def delete(bucket_name: str, object_key: str = typer.Argument(None, help="Object key to delete (omit to delete the bucket)"), region: Region = typer.Option(Region.auto, help='AWS region name')):
+def delete(
+    bucket_name: str,
+    object_key: str = typer.Argument(
+        None,
+        help="Object key to delete (omit to delete the bucket)"
+    ),
+    region: Region = typer.Option(
+        Region.AUTO,
+        help='AWS region name'
+    )
+):
     """Delete an object from the S3 bucket, or delete the bucket if no object key is provided."""
     deleter = get_s3_action(S3Deleter, region)
     try:
         if object_key:
-            confirm = typer.confirm(f"Are you sure you want to delete the object '{object_key}' from bucket '{bucket_name}'?")
+            confirm = typer.confirm(
+                f"Are you sure you want to delete the object '{object_key}' "
+                f"from bucket '{bucket_name}'?"
+            )
             if not confirm:
                 typer.echo("Deletion cancelled.")
                 return
@@ -123,11 +181,21 @@ def delete(bucket_name: str, object_key: str = typer.Argument(None, help="Object
         raise typer.Exit(code=1)
 
 @app.command()
-def abort(bucket_name: str, object_key: str, upload_id: str, region: Region = typer.Option(Region.auto, help='AWS region name')):
+def abort(
+    bucket_name: str,
+    object_key: str,
+    upload_id: str,
+    region: Region = typer.Option(
+        Region.AUTO, help='AWS region name'
+    )
+):
     """Aborts a multipart upload in the S3 bucket."""
     aborter = get_s3_action(S3Aborter, region)
     try:
-        confirm = typer.confirm(f"Are you sure you want to abort the multipart upload '{upload_id}' for object '{object_key}' in bucket '{bucket_name}'?")
+        confirm = typer.confirm(
+            f"Are you sure you want to abort the multipart upload '{upload_id}' "
+            f"for object '{object_key}' in bucket '{bucket_name}'?"
+        )
         if not confirm:
             typer.echo("Abortion cancelled.")
             return
