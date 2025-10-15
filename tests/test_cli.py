@@ -32,9 +32,9 @@ class TestCliCommands:
     def test_list_buckets(self, mock_env_vars, mock_get_s3_action):
         mock_lister = MagicMock()
         mock_get_s3_action.return_value = mock_lister
-        
+
         result = runner.invoke(app, ["list", "--buckets"])
-        
+
         assert result.exit_code == 0
         mock_get_s3_action.assert_called_once_with(pytest.importorskip("actions").S3Lister, Region.auto)
         mock_lister.list_buckets.assert_called_once_with(False)
@@ -42,48 +42,48 @@ class TestCliCommands:
     def test_list_buckets_with_region(self, mock_env_vars, mock_get_s3_action):
         mock_lister = MagicMock()
         mock_get_s3_action.return_value = mock_lister
-        
+
         result = runner.invoke(app, ["list", "--buckets", "--with-region"])
-        
+
         assert result.exit_code == 0
         mock_lister.list_buckets.assert_called_once_with(True)
 
     def test_list_objects(self, mock_env_vars, mock_get_s3_action):
         mock_lister = MagicMock()
         mock_get_s3_action.return_value = mock_lister
-        
+
         result = runner.invoke(app, ["list", "test-bucket"])
-        
+
         assert result.exit_code == 0
         mock_lister.list_objects.assert_called_once_with("test-bucket")
 
     def test_list_objects_with_prefix(self, mock_env_vars, mock_get_s3_action):
         mock_lister = MagicMock()
         mock_get_s3_action.return_value = mock_lister
-        
+
         result = runner.invoke(app, ["list", "test-bucket", "--prefix", "test/"])
-        
+
         assert result.exit_code == 0
         mock_lister.list_objects_with_prefix.assert_called_once_with("test-bucket", "test/")
 
     def test_list_objects_with_prefix_no_bucket_fails(self, mock_env_vars, mock_get_s3_action): 
         result = runner.invoke(app, ["list", "--prefix", "test/"])
-        
+
         assert result.exit_code == 1
         assert "Error: --prefix requires a bucket name." in result.stdout
 
     def test_list_multipart_uploads(self, mock_env_vars, mock_get_s3_action):
         mock_lister = MagicMock()
         mock_get_s3_action.return_value = mock_lister
-        
+
         result = runner.invoke(app, ["list", "test-bucket", "--multipart"])
-        
+
         assert result.exit_code == 0
         mock_lister.list_multipart_uploads.assert_called_once_with("test-bucket")
 
     def test_list_multipart_with_prefix_fails(self, mock_env_vars, mock_get_s3_action):
         result = runner.invoke(app, ["list", "test-bucket", "--multipart", "--prefix", "test/"])
-        
+
         assert result.exit_code == 1
         assert "mutually exclusive" in result.stdout
 
@@ -295,10 +295,10 @@ class TestCliCommands:
     def test_abort_multipart(self, mock_env_vars, mock_get_s3_action):
         mock_aborter = MagicMock()
         mock_get_s3_action.return_value = mock_aborter
-        
+
         # Mock the confirm prompt to return True
         result = runner.invoke(app, ["abort", "test-bucket", "test-key", "upload-id"], input="y\n")
-        
+
         assert result.exit_code == 0
         mock_aborter.abort_multipart_upload.assert_called_once_with("test-bucket", "test-key", "upload-id")
 
