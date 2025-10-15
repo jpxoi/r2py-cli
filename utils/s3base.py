@@ -1,8 +1,8 @@
 import os
 import sys
 import boto3
-from .logger import Logger
 from utils import Region
+from .logger import Logger
 
 logger = Logger('s3Client').get_logger()
 
