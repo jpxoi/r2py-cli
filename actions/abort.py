@@ -52,7 +52,7 @@ class S3Aborter(S3Base):
                 "Successfully aborted multipart upload for '%s' in bucket '%s'",
                 object_key, bucket_name
             )
-            print(self.colorize("Successfully aborted multipart upload for '{object_key}' in bucket '{bucket_name}'", "OKGREEN"))
+            print(self.colorize(f"Successfully aborted multipart upload for '{object_key}' in bucket '{bucket_name}'", "OKGREEN"))
         except Exception as e:
             raise S3ActionError(f"Failed to abort multipart upload: {e}") from e
         finally:

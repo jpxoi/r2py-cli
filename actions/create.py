@@ -50,7 +50,7 @@ class S3Creator(S3Base):
             else:
                 self.s3.create_bucket(Bucket=bucket_name)
             self.logger.info("Successfully created bucket '%s'", bucket_name)
-            print(self.colorize("Successfully created bucket '{bucket_name}'", "OKGREEN"))
+            print(self.colorize(f"Successfully created bucket '{bucket_name}'", "OKGREEN"))
         except Exception as e:
             raise S3ActionError(f"Failed to create bucket: {e}") from e
         finally:

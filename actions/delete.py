@@ -43,7 +43,7 @@ class S3Deleter(S3Base):
             response = self.s3.delete_bucket(Bucket=bucket_name)
             self.logger.debug("Delete response: %s", response)
             self.logger.info("Successfully deleted bucket '%s'", bucket_name)
-            print(self.colorize("Successfully deleted bucket '{bucket_name}'", "OKGREEN"))
+            print(self.colorize(f"Successfully deleted bucket '{bucket_name}'", "OKGREEN"))
         except Exception as e:
             raise S3ActionError(f"Failed to delete bucket: {e}") from e
 
@@ -64,6 +64,6 @@ class S3Deleter(S3Base):
             response = self.s3.delete_object(Bucket=bucket_name, Key=object_key)
             self.logger.debug("Delete response: %s", response)
             self.logger.info("Object deleted: %s/%s", bucket_name, object_key)
-            print(self.colorize("Successfully deleted object '{object_key}' from bucket '{bucket_name}'", "OKGREEN"))
+            print(self.colorize(f"Successfully deleted object '{object_key}' from bucket '{bucket_name}'", "OKGREEN"))
         except Exception as e:
             raise S3ActionError(f"Failed to delete object: {e}") from e
