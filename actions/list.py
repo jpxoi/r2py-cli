@@ -9,10 +9,12 @@ the bucket name and region.
 
 from utils import S3Base, Colors, S3ActionError, Region
 
+
 class S3Lister(S3Base):
     """
     Handles listing buckets, files, etc. from a Cloudflare R2 bucket using the S3-compatible API.
     """
+
     def __init__(
         self,
         endpoint_url: str,
@@ -42,7 +44,7 @@ class S3Lister(S3Base):
         """
         try:
             response = self.s3.list_buckets()
-            buckets = response.get('Buckets', [])
+            buckets = response.get("Buckets", [])
             print(self.colorize("=== Buckets ===", "HEADER"))
             if not buckets:
                 print(self.colorize("No buckets found.", "WARNING"))
@@ -51,13 +53,19 @@ class S3Lister(S3Base):
                 for bucket in buckets:
                     print(self.colorize(f"Bucket: {bucket['Name']}", "OKGREEN"))
                     if with_region:
-                        print(self.colorize("  Region: ", "OKBLUE"), end='')
+                        print(self.colorize("  Region: ", "OKBLUE"), end="")
                         try:
-                            region = self.s3.get_bucket_location(Bucket=bucket['Name'])['LocationConstraint']
+                            region = self.s3.get_bucket_location(Bucket=bucket["Name"])[
+                                "LocationConstraint"
+                            ]
                         except Exception as e:
                             region = self.colorize(f"Error: {e}", "FAIL")
                         print(f"{region}")
-                    print(self.colorize(f"  Created: {bucket['CreationDate']}\n", "OKCYAN"))
+                    print(
+                        self.colorize(
+                            f"  Created: {bucket['CreationDate']}\n", "OKCYAN"
+                        )
+                    )
         except Exception as e:
             raise S3ActionError(f"Error listing buckets: {e}") from e
         finally:
@@ -74,10 +82,13 @@ class S3Lister(S3Base):
         try:
             response = self.s3.list_objects_v2(Bucket=bucket_name)
             print(self.colorize(f"=== Objects in Bucket: {bucket_name} ===", "HEADER"))
-            if 'Contents' in response:
-                print(self.colorize("%-60s %12s", "UNDERLINE") % ("Object Key", "Size (bytes)"))
-                for obj in response['Contents']:
-                    colored_key = self.colorize(obj['Key'], 'OKGREEN')
+            if "Contents" in response:
+                print(
+                    self.colorize("%-60s %12s", "UNDERLINE")
+                    % ("Object Key", "Size (bytes)")
+                )
+                for obj in response["Contents"]:
+                    colored_key = self.colorize(obj["Key"], "OKGREEN")
                     print(f"{colored_key:<60} {obj['Size']:12}")
             else:
                 print(self.colorize("No objects found.", "WARNING"))
@@ -98,22 +109,26 @@ class S3Lister(S3Base):
             response = self.s3.list_multipart_uploads(Bucket=bucket_name)
             print(
                 self.colorize_bold(
-                    f"=== Multipart Uploads in Bucket: {bucket_name} ===",
-                    "HEADER"
+                    f"=== Multipart Uploads in Bucket: {bucket_name} ===", "HEADER"
                 )
             )
-            if 'Uploads' in response:
-                print(self.colorize_underline("%-40s %-40s", "UNDERLINE") % ("Upload ID", "Object Key"))
-                for upload in response['Uploads']:
-                    colored_id = self.colorize(upload['UploadId'], 'OKBLUE')
-                    colored_key = self.colorize(upload['Key'], 'OKGREEN')
+            if "Uploads" in response:
+                print(
+                    self.colorize_underline("%-40s %-40s", "UNDERLINE")
+                    % ("Upload ID", "Object Key")
+                )
+                for upload in response["Uploads"]:
+                    colored_id = self.colorize(upload["UploadId"], "OKBLUE")
+                    colored_key = self.colorize(upload["Key"], "OKGREEN")
                     print(f"{colored_id:<40} {colored_key:<40}")
             else:
                 print(self.colorize("No multipart uploads found.", "WARNING"))
         except Exception as e:
             raise S3ActionError(f"Error listing multipart uploads: {e}") from e
         finally:
-            self.logger.info("Finished listing multipart uploads in bucket '%s'.", bucket_name)
+            self.logger.info(
+                "Finished listing multipart uploads in bucket '%s'.", bucket_name
+            )
 
     def list_objects_with_prefix(self, bucket_name: str, prefix: str) -> None:
         """
@@ -126,23 +141,27 @@ class S3Lister(S3Base):
         """
         try:
             response = self.s3.list_objects_v2(Bucket=bucket_name, Prefix=prefix)
-            title = (
-                f"=== Objects in Bucket: {bucket_name} "
-                f"(Prefix: '{prefix}') ==="
-            )
+            title = f"=== Objects in Bucket: {bucket_name} (Prefix: '{prefix}') ==="
             print(self.colorize_bold(title, "HEADER"))
-            if 'Contents' in response:
+            if "Contents" in response:
                 print(
-                    self.colorize_underline(
-                        "%-60s %12s", "UNDERLINE"
-                    ) % ("Object Key", "Size (bytes)")
+                    self.colorize_underline("%-60s %12s", "UNDERLINE")
+                    % ("Object Key", "Size (bytes)")
                 )
-                for obj in response['Contents']:
-                    colored_key = self.colorize(obj['Key'], 'OKGREEN')
+                for obj in response["Contents"]:
+                    colored_key = self.colorize(obj["Key"], "OKGREEN")
                     print(f"{colored_key:<60} {obj['Size']:12}")
             else:
-                print(self.colorize("No objects found with the specified prefix.", "WARNING"))
+                print(
+                    self.colorize(
+                        "No objects found with the specified prefix.", "WARNING"
+                    )
+                )
         except Exception as e:
             raise S3ActionError(f"Error listing objects with prefix: {e}") from e
         finally:
-            self.logger.info("Finished listing objects with prefix '%s' in bucket '%s'.", prefix, bucket_name)
+            self.logger.info(
+                "Finished listing objects with prefix '%s' in bucket '%s'.",
+                prefix,
+                bucket_name,
+            )

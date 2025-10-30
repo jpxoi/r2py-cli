@@ -8,10 +8,12 @@ multipart upload by specifying the bucket name, object key, and upload ID.
 
 from utils import S3Base, Colors, S3ActionError, Region
 
+
 class S3Aborter(S3Base):
     """
     Handles aborting multipart uploads from a Cloudflare R2 bucket using the S3-compatible API.
     """
+
     def __init__(
         self,
         endpoint_url: str,
@@ -31,7 +33,9 @@ class S3Aborter(S3Base):
         self.logger = S3Base.get_logger()
         self.colorize = Colors.colorize
 
-    def abort_multipart_upload(self, bucket_name: str, object_key: str, upload_id: str) -> None:
+    def abort_multipart_upload(
+        self, bucket_name: str, object_key: str, upload_id: str
+    ) -> None:
         """
         Abort a multipart upload.
         Args:
@@ -43,16 +47,26 @@ class S3Aborter(S3Base):
         """
         self.logger.info(
             "Attempting to abort multipart upload for '%s' with upload ID '%s' in bucket '%s'...",
-            object_key, upload_id, bucket_name
+            object_key,
+            upload_id,
+            bucket_name,
         )
         try:
-            response = self.s3.abort_multipart_upload(Bucket=bucket_name, Key=object_key, UploadId=upload_id)
+            response = self.s3.abort_multipart_upload(
+                Bucket=bucket_name, Key=object_key, UploadId=upload_id
+            )
             self.logger.debug("Abort response: %s", response)
             self.logger.info(
                 "Successfully aborted multipart upload for '%s' in bucket '%s'",
-                object_key, bucket_name
+                object_key,
+                bucket_name,
             )
-            print(self.colorize(f"Successfully aborted multipart upload for '{object_key}' in bucket '{bucket_name}'", "OKGREEN"))
+            print(
+                self.colorize(
+                    f"Successfully aborted multipart upload for '{object_key}' in bucket '{bucket_name}'",
+                    "OKGREEN",
+                )
+            )
         except Exception as e:
             raise S3ActionError(f"Failed to abort multipart upload: {e}") from e
         finally:

@@ -7,16 +7,18 @@ a method to delete an object by specifying the bucket name and object key,
 and a method to delete a bucket by specifying the bucket name.
 """
 
-from utils import S3Base, Colors, S3ActionError, Region
+from utils import Colors, Region, S3ActionError, S3Base
+
 
 class S3Deleter(S3Base):
     """Handles deleting objects from a Cloudflare R2 bucket using the S3-compatible API."""
+
     def __init__(
         self,
         endpoint_url: str,
         access_key: str,
         secret_key: str,
-        region: Region = Region.AUTO
+        region: Region = Region.AUTO,
     ):
         """
         Initialize the deleter with S3 credentials and endpoint.
@@ -43,7 +45,9 @@ class S3Deleter(S3Base):
             response = self.s3.delete_bucket(Bucket=bucket_name)
             self.logger.debug("Delete response: %s", response)
             self.logger.info("Successfully deleted bucket '%s'", bucket_name)
-            print(self.colorize(f"Successfully deleted bucket '{bucket_name}'", "OKGREEN"))
+            print(
+                self.colorize(f"Successfully deleted bucket '{bucket_name}'", "OKGREEN")
+            )
         except Exception as e:
             raise S3ActionError(f"Failed to delete bucket: {e}") from e
 
@@ -58,12 +62,18 @@ class S3Deleter(S3Base):
         """
         self.logger.info(
             "Attempting to delete object '%s' from bucket '%s'...",
-            object_key, bucket_name
+            object_key,
+            bucket_name,
         )
         try:
             response = self.s3.delete_object(Bucket=bucket_name, Key=object_key)
             self.logger.debug("Delete response: %s", response)
             self.logger.info("Object deleted: %s/%s", bucket_name, object_key)
-            print(self.colorize(f"Successfully deleted object '{object_key}' from bucket '{bucket_name}'", "OKGREEN"))
+            print(
+                self.colorize(
+                    f"Successfully deleted object '{object_key}' from bucket '{bucket_name}'",
+                    "OKGREEN",
+                )
+            )
         except Exception as e:
             raise S3ActionError(f"Failed to delete object: {e}") from e

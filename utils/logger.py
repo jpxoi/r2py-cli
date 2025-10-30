@@ -12,11 +12,13 @@ from datetime import datetime
 from typing import Optional
 from .colors import Colors
 
+
 class Logger:
     """Singleton logger with file and colored stream handlers for CLI tools."""
+
     _instances = {}
 
-    def __new__(cls, action: str = 'action', log_dir: Optional[str] = None):
+    def __new__(cls, action: str = "action", log_dir: Optional[str] = None):
         """
         Create or return a logger instance for the given action and log directory.
         Args:
@@ -41,17 +43,17 @@ class Logger:
             log_dir = os.path.join(os.getcwd(), "logs")
 
         os.makedirs(log_dir, exist_ok=True)
-        timestamp = datetime.now().strftime('%Y%m%d-%H%M%S')
-        log_filename = f'{timestamp}-{action}.log'
+        timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+        log_filename = f"{timestamp}-{action}.log"
         log_path = os.path.join(log_dir, log_filename)
         self.logger = logging.getLogger(action)
         self.logger.setLevel(logging.DEBUG)
 
-        file_handler = logging.FileHandler(log_path, mode='w')
+        file_handler = logging.FileHandler(log_path, mode="w")
         file_formatter = logging.Formatter(
-            '%(asctime)s | %(levelname)s | %(filename)s:%(lineno)s | '
-            '%(process)d >>> %(message)s',
-            datefmt='%Y-%m-%d %H:%M:%S'
+            "%(asctime)s | %(levelname)s | %(filename)s:%(lineno)s | "
+            "%(process)d >>> %(message)s",
+            datefmt="%Y-%m-%d %H:%M:%S",
         )
         file_handler.setFormatter(file_formatter)
         file_handler.setLevel(logging.DEBUG)
@@ -59,21 +61,25 @@ class Logger:
         # Colored formatter for stream handler
         class ColoredFormatter(logging.Formatter):
             """Colored formatter for stream handler."""
+
             LEVEL_COLORS = {
-                'WARNING': Colors.WARNING,
-                'ERROR': Colors.ERROR,
-                'CRITICAL': Colors.CRITICAL,
+                "WARNING": Colors.WARNING,
+                "ERROR": Colors.ERROR,
+                "CRITICAL": Colors.CRITICAL,
             }
+
             def format(self, record):
                 msg = super().format(record)
-                color = self.LEVEL_COLORS.get(record.levelname, '')
-                reset = Colors.RESET if color else ''
+                color = self.LEVEL_COLORS.get(record.levelname, "")
+                reset = Colors.RESET if color else ""
                 return f"{color}{msg}{reset}"
 
         stream_handler = logging.StreamHandler()
-        stream_formatter = ColoredFormatter('%(levelname)s: %(message)s')
+        stream_formatter = ColoredFormatter("%(levelname)s: %(message)s")
         stream_handler.setFormatter(stream_formatter)
-        stream_handler.setLevel(logging.WARNING)  # Only print WARNING and above to console
+        stream_handler.setLevel(
+            logging.WARNING
+        )  # Only print WARNING and above to console
 
         if not self.logger.handlers:
             self.logger.addHandler(file_handler)

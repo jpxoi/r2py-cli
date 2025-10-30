@@ -12,9 +12,13 @@ import os
 from tqdm import tqdm
 from .logger import Logger
 
+
 class TqdmProgress:
     """Progress bar callback for S3 downloads or uploads."""
-    def __init__(self, filename: str, action: str, total_size: int = None, logger: Logger = None):
+
+    def __init__(
+        self, filename: str, action: str, total_size: int = None, logger: Logger = None
+    ):
         """
         Initialize the progress bar for upload or download.
         Args:
@@ -40,13 +44,13 @@ class TqdmProgress:
             raise ValueError("action must be 'upload' or 'download'")
         self._tqdm = tqdm(
             total=self._size,
-            unit='B',
+            unit="B",
             unit_scale=True,
             unit_divisor=1024,
             desc=os.path.basename(filename),
             leave=True,
             dynamic_ncols=True,
-            colour='green' if action == "upload" else 'blue',
+            colour="green" if action == "upload" else "blue",
         )
         self._seen_so_far = 0
         if self.logger:
@@ -74,9 +78,7 @@ class TqdmProgress:
         if self.logger:
             action_str = "Uploaded" if self._action == "upload" else "Downloaded"
             mb_seen = self._seen_so_far / (1024 * 1024)
-            self.logger.debug(
-                f"{action_str} {mb_seen:.2f} MB of {self._filename}"
-            )
+            self.logger.debug(f"{action_str} {mb_seen:.2f} MB of {self._filename}")
 
     def close(self) -> None:
         """

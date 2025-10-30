@@ -11,19 +11,23 @@ import boto3
 from utils import Region
 from .logger import Logger
 
-logger = Logger('s3Client').get_logger()
+logger = Logger("s3Client").get_logger()
+
 
 class S3ActionError(Exception):
     """Custom exception for S3 action errors."""
+
     def __init__(self, message: str):
         """Initialize the exception with a message."""
         self.message = message
         super().__init__(self.message)
-        self.logger = Logger('s3Client').get_logger()
+        self.logger = Logger("s3Client").get_logger()
         self.logger.error("S3 action error: %s", self.message)
+
 
 class S3Base:
     """Base class for S3-compatible operations with Cloudflare R2."""
+
     _clients = {}
 
     def __init__(
@@ -42,7 +46,7 @@ class S3Base:
             region (Region): AWS region or 'auto'.
         """
         self.logger = logger
-        if region == 'auto':
+        if region == "auto":
             self.logger.warning("Region set to 'auto'. Routing requests automatically.")
             region = None
         else:
@@ -51,7 +55,7 @@ class S3Base:
         key = (endpoint_url, access_key, secret_key, region)
         if key not in S3Base._clients:
             S3Base._clients[key] = boto3.client(
-                service_name='s3',
+                service_name="s3",
                 endpoint_url=endpoint_url,
                 aws_access_key_id=access_key,
                 aws_secret_access_key=secret_key,

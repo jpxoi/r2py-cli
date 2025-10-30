@@ -6,13 +6,16 @@ to a Cloudflare R2 bucket using the S3-compatible API. It provides a method to
 upload a file by specifying the filename, bucket name, and object key.
 """
 
-import os
 import mimetypes
+import os
 from typing import Optional
-from utils import TqdmProgress, S3Base, S3ActionError, Region
+
+from utils import Region, S3ActionError, S3Base, TqdmProgress
+
 
 class S3Uploader(S3Base):
     """Handles uploading files to a Cloudflare R2 bucket using the S3-compatible API."""
+
     def __init__(
         self,
         endpoint_url: str,
@@ -32,10 +35,7 @@ class S3Uploader(S3Base):
         self.logger = S3Base.get_logger()
 
     def upload_file(
-        self,
-        filename: str,
-        bucket_name: str,
-        object_key: Optional[str] = None
+        self, filename: str, bucket_name: str, object_key: Optional[str] = None
     ) -> None:
         """
         Upload a file to the specified bucket.
@@ -49,32 +49,39 @@ class S3Uploader(S3Base):
         if not os.path.isfile(filename):
             raise S3ActionError(f"File not found: {filename}")
         if not object_key:
-            self.logger.warning("Object key not provided. Using filename as object key.")
+            self.logger.warning(
+                "Object key not provided. Using filename as object key."
+            )
             object_key = os.path.basename(filename)
         mime_type, _ = mimetypes.guess_type(filename)
         if not mime_type:
             self.logger.warning(
                 "Could not determine MIME type for %s. "
                 "Defaulting to 'application/octet-stream'.",
-                filename
+                filename,
             )
             mime_type = "application/octet-stream"
         self.logger.info(
             "Uploading '%s' to '%s/%s' with MIME type '%s'.",
-            filename, bucket_name, object_key, mime_type
+            filename,
+            bucket_name,
+            object_key,
+            mime_type,
         )
         progress_callback = TqdmProgress(filename, action="upload", logger=self.logger)
 
         try:
-            with open(filename, 'rb') as file:
+            with open(filename, "rb") as file:
                 self.s3.upload_fileobj(
                     file,
                     bucket_name,
                     object_key,
-                    ExtraArgs={'ContentType': mime_type},
-                    Callback=progress_callback
+                    ExtraArgs={"ContentType": mime_type},
+                    Callback=progress_callback,
                 )
-            self.logger.info("File '%s' uploaded to '%s/%s'.", filename, bucket_name, object_key)
+            self.logger.info(
+                "File '%s' uploaded to '%s/%s'.", filename, bucket_name, object_key
+            )
         except Exception as e:
             raise S3ActionError(f"Error uploading file: {e}") from e
         finally:

@@ -8,10 +8,13 @@ download a file by specifying the bucket name, object key, and filename.
 
 import os
 from typing import Optional
-from utils import TqdmProgress, S3Base, S3ActionError, Region
+
+from utils import Region, S3ActionError, S3Base, TqdmProgress
+
 
 class S3Downloader(S3Base):
     """Handles downloading files from a Cloudflare R2 bucket using the S3-compatible API."""
+
     def __init__(
         self,
         endpoint_url: str,
@@ -29,12 +32,9 @@ class S3Downloader(S3Base):
         """
         super().__init__(endpoint_url, access_key, secret_key, region)
         self.logger = S3Base.get_logger()
-        
+
     def download_file(
-        self,
-        bucket_name: str,
-        object_key: str,
-        filename: Optional[str] = None
+        self, bucket_name: str, object_key: str, filename: Optional[str] = None
     ) -> None:
         """
         Download a file from the specified bucket.
@@ -52,26 +52,22 @@ class S3Downloader(S3Base):
             filename = os.path.basename(object_key)
         try:
             head = self.s3.head_object(Bucket=bucket_name, Key=object_key)
-            total_size = head['ContentLength']
+            total_size = head["ContentLength"]
         except Exception as e:
             raise S3ActionError(f"Could not get object metadata: {e}") from e
         progress_callback = TqdmProgress(
-            filename,
-            action="download",
-            total_size=total_size,
-            logger=self.logger
+            filename, action="download", total_size=total_size, logger=self.logger
         )
         try:
-            with open(filename, 'wb') as f:
+            with open(filename, "wb") as f:
                 self.s3.download_fileobj(
-                    bucket_name,
-                    object_key,
-                    f,
-                    Callback=progress_callback
+                    bucket_name, object_key, f, Callback=progress_callback
                 )
             self.logger.info(
                 "File '%s' downloaded from '%s' to '%s'.",
-                object_key, bucket_name, filename
+                object_key,
+                bucket_name,
+                filename,
             )
         except Exception as e:
             raise S3ActionError(f"Error downloading file: {e}") from e

@@ -6,16 +6,18 @@ in a Cloudflare R2 bucket using the S3-compatible API. It provides a method to
 create a bucket by specifying the bucket name and region.
 """
 
-from utils import S3Base, Colors, S3ActionError, Region
+from utils import Colors, Region, S3ActionError, S3Base
+
 
 class S3Creator(S3Base):
     """Handles creating buckets and managing S3 resources."""
+
     def __init__(
         self,
         endpoint_url: str,
         access_key: str,
         secret_key: str,
-        region: Region = Region.AUTO
+        region: Region = Region.AUTO,
     ):
         """
         Initialize the creator with S3 credentials and endpoint.
@@ -43,14 +45,14 @@ class S3Creator(S3Base):
             if region:
                 self.s3.create_bucket(
                     Bucket=bucket_name,
-                    CreateBucketConfiguration={
-                        'LocationConstraint': region
-                    }
+                    CreateBucketConfiguration={"LocationConstraint": region},
                 )
             else:
                 self.s3.create_bucket(Bucket=bucket_name)
             self.logger.info("Successfully created bucket '%s'", bucket_name)
-            print(self.colorize(f"Successfully created bucket '{bucket_name}'", "OKGREEN"))
+            print(
+                self.colorize(f"Successfully created bucket '{bucket_name}'", "OKGREEN")
+            )
         except Exception as e:
             raise S3ActionError(f"Failed to create bucket: {e}") from e
         finally:
